@@ -217,7 +217,7 @@ func getGenericBSU(accountType string) (azblob.ServiceURL, error) {
 }
 
 func getBSU() azblob.ServiceURL {
-	bsu, _ := getGenericBSU("") 
+	bsu, _ := getGenericBSU("")
 	return bsu
 }
 
@@ -245,14 +245,14 @@ func getRelativeTimeGMT(amount time.Duration) time.Time {
 }
 
 // Some tests require setting service propriets. It can take up to 30 seconds for the new properties to be reflected across all FEs.
-// We will enable the necessary property and try to run the test implementation. If it fails with an error that should be due to 
-// those changes not being reflected yet, we will wait 30 seconds and try the test again. If it fails this time for any reason, 
+// We will enable the necessary property and try to run the test implementation. If it fails with an error that should be due to
+// those changes not being reflected yet, we will wait 30 seconds and try the test again. If it fails this time for any reason,
 // we fail the test. It is the responsibility of the the testImplFunc to determine which error string indicates the test should be retried.
 // There can only be one such string. All errors that cannot be due to this detail should be asserted and not returned as an error string.
 func runTestRequiringServiceProperties(c *chk.C, bsu azblob.ServiceURL, code string,
-										enableServicePropertyFunc func(*chk.C, azblob.ServiceURL),
-										testImplFunc func(*chk.C, azblob.ServiceURL) error,
-										disableServicePropertyFunc func(*chk.C, azblob.ServiceURL)) {
+	enableServicePropertyFunc func(*chk.C, azblob.ServiceURL),
+	testImplFunc func(*chk.C, azblob.ServiceURL) error,
+	disableServicePropertyFunc func(*chk.C, azblob.ServiceURL)) {
 	enableServicePropertyFunc(c, bsu)
 	defer disableServicePropertyFunc(c, bsu)
 	err := testImplFunc(c, bsu)
@@ -456,7 +456,7 @@ func (s *aztestsSuite) TestAccountDeleteRetentionPolicyDaysTooSmall(c *chk.C) {
 	bsu := getBSU()
 
 	days := int32(0) // Minimum days is 1. Validated on the client.
-	_, err := bsu.SetProperties(ctx, azblob.StorageServiceProperties{DeleteRetentionPolicy: &azblob.RetentionPolicy{Enabled: true, Days: &days}})	
+	_, err := bsu.SetProperties(ctx, azblob.StorageServiceProperties{DeleteRetentionPolicy: &azblob.RetentionPolicy{Enabled: true, Days: &days}})
 	c.Assert(strings.Contains(err.Error(), validationErrorSubstring), chk.Equals, true)
 }
 
@@ -781,7 +781,7 @@ func (s *aztestsSuite) TestContainerAccessConditionsUnsupportedConditions(c *chk
 	invalidEtag := azblob.ETag("invalid")
 	containerURL.SetMetadata(ctx, basicMetadata,
 		azblob.ContainerAccessConditions{HTTPAccessConditions: azblob.HTTPAccessConditions{IfMatch: invalidEtag}})
-	
+
 	// We will only reach this if the api call fails to panic.
 	c.Fail()
 }
@@ -929,7 +929,7 @@ func testContainerListBlobsIncludeTypeDeletedImpl(c *chk.C, bsu azblob.ServiceUR
 	_, err := blobURL.Delete(ctx, azblob.DeleteSnapshotsOptionNone, azblob.BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
-	resp, err := containerURL.ListBlobs(ctx, azblob.Marker{}, 
+	resp, err := containerURL.ListBlobs(ctx, azblob.Marker{},
 		azblob.ListBlobsOptions{Details: azblob.BlobListingDetails{Deleted: true}})
 	c.Assert(err, chk.IsNil)
 	if len(resp.Blobs.Blob) != 1 {
@@ -942,7 +942,7 @@ func testContainerListBlobsIncludeTypeDeletedImpl(c *chk.C, bsu azblob.ServiceUR
 func (s *aztestsSuite) TestContainerListBlobsIncludeTypeDeleted(c *chk.C) {
 	bsu := getBSU()
 
-	runTestRequiringServiceProperties(c, bsu, "DeletedBlobNotFound", enableSoftDelete, 
+	runTestRequiringServiceProperties(c, bsu, "DeletedBlobNotFound", enableSoftDelete,
 		testContainerListBlobsIncludeTypeDeletedImpl, disableSoftDelete)
 }
 
@@ -978,7 +978,7 @@ func testContainerListBlobsIncludeMultipleImpl(c *chk.C, bsu azblob.ServiceURL) 
 
 func (s *aztestsSuite) TestContainerListBlobsIncludeMultiple(c *chk.C) {
 	bsu := getBSU()
-	
+
 	runTestRequiringServiceProperties(c, bsu, "DeletedBlobNotFound", enableSoftDelete,
 		testContainerListBlobsIncludeMultipleImpl, disableSoftDelete)
 }
@@ -1705,7 +1705,7 @@ func (s *aztestsSuite) TestBlobStartCopySourcePrivate(c *chk.C) {
 	defer deleteContainer(c, copyContainerURL)
 	copyBlobURL, _ := getBlockBlobURL(c, copyContainerURL)
 
-	if  bsu.String() == bsu2.String() {
+	if bsu.String() == bsu2.String() {
 		c.Skip("Test not valid because primary and secondary accounts are the same")
 	}
 	_, err = copyBlobURL.StartCopy(ctx, blobURL.URL(), nil, azblob.BlobAccessConditions{}, azblob.BlobAccessConditions{})
@@ -1732,8 +1732,8 @@ func (s *aztestsSuite) TestBlobStartCopyUsingSASSrc(c *chk.C) {
 	sasURL.RawQuery = queryParams.Encode()
 
 	// Create a new container for the destination
-	bsu2 ,err:= getAlternateBSU()
-	if err!=nil {
+	bsu2, err := getAlternateBSU()
+	if err != nil {
 		c.Skip(err.Error())
 		return
 	}
@@ -1771,8 +1771,8 @@ func (s *aztestsSuite) TestBlobStartCopyUsingSASDest(c *chk.C) {
 	queryParams := serviceSASValues.NewSASQueryParameters(credentials)
 
 	// Create destination container
-	bsu2,err := getAlternateBSU()
-	if err!=nil {
+	bsu2, err := getAlternateBSU()
+	if err != nil {
 		c.Skip(err.Error())
 		return
 	}
@@ -2110,7 +2110,7 @@ func (s *aztestsSuite) TestBlobAbortCopyInProgress(c *chk.C) {
 
 	// Must copy across accounts so it takes time to copy
 	bsu2, err := getAlternateBSU()
-	if err!=nil {
+	if err != nil {
 		c.Skip(err.Error())
 		return
 	}
@@ -5753,8 +5753,8 @@ func (s *aztestsSuite) TestBlobTierInferred(c *chk.C) {
 	resp2, err := containerURL.ListBlobs(ctx, azblob.Marker{}, azblob.ListBlobsOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp2.Blobs.Blob[0].Properties.AccessTierInferred, chk.IsNil) // AccessTier element only returned on ListBlobs if it is explicitly set
-	
-	_, err = blobURL.SetBlobTier(ctx, azblob.AccessTierP4)	
+
+	_, err = blobURL.SetBlobTier(ctx, azblob.AccessTierP4)
 	c.Assert(err, chk.IsNil)
 
 	resp, err = blobURL.GetPropertiesAndMetadata(ctx, azblob.BlobAccessConditions{})

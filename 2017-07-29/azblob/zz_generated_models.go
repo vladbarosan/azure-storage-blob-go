@@ -7,6 +7,7 @@ import (
 	"encoding/xml"
 	"io"
 	"net/http"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -68,6 +69,19 @@ func (m *Marker) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	err := d.DecodeElement(&out, &start)
 	m.val = &out
 	return err
+}
+
+// concatenates a slice of const values with the specified separator between each item
+func joinConst(s interface{}, sep string) string {
+	v := reflect.ValueOf(s)
+	if v.Kind() != reflect.Slice && v.Kind() != reflect.Array {
+		panic("s wasn't a slice or array")
+	}
+	ss := make([]string, 0, v.Len())
+	for i := 0; i < v.Len(); i++ {
+		ss = append(ss, v.Index(i).String())
+	}
+	return strings.Join(ss, sep)
 }
 
 // AccessTierType enumerates the values for access tier.
@@ -180,24 +194,6 @@ const (
 	GeoReplicationStatusUnavailable GeoReplicationStatusType = "unavailable"
 )
 
-// LeaseActionType enumerates the values for lease action type.
-type LeaseActionType string
-
-const (
-	// LeaseActionAcquire ...
-	LeaseActionAcquire LeaseActionType = "acquire"
-	// LeaseActionBreak ...
-	LeaseActionBreak LeaseActionType = "break"
-	// LeaseActionChange ...
-	LeaseActionChange LeaseActionType = "change"
-	// LeaseActionNone represents an empty LeaseActionType.
-	LeaseActionNone LeaseActionType = ""
-	// LeaseActionRelease ...
-	LeaseActionRelease LeaseActionType = "release"
-	// LeaseActionRenew ...
-	LeaseActionRenew LeaseActionType = "renew"
-)
-
 // LeaseDurationType enumerates the values for lease duration type.
 type LeaseDurationType string
 
@@ -240,22 +236,22 @@ const (
 	LeaseStatusUnlocked LeaseStatusType = "unlocked"
 )
 
-// ListBlobsIncludeType enumerates the values for list blobs include type.
-type ListBlobsIncludeType string
+// ListBlobsIncludeItemType enumerates the values for list blobs include item.
+type ListBlobsIncludeItemType string
 
 const (
-	// ListBlobsIncludeCopy ...
-	ListBlobsIncludeCopy ListBlobsIncludeType = "copy"
-	// ListBlobsIncludeDeleted ...
-	ListBlobsIncludeDeleted ListBlobsIncludeType = "deleted"
-	// ListBlobsIncludeMetadata ...
-	ListBlobsIncludeMetadata ListBlobsIncludeType = "metadata"
-	// ListBlobsIncludeNone represents an empty ListBlobsIncludeType.
-	ListBlobsIncludeNone ListBlobsIncludeType = ""
-	// ListBlobsIncludeSnapshots ...
-	ListBlobsIncludeSnapshots ListBlobsIncludeType = "snapshots"
-	// ListBlobsIncludeUncommittedblobs ...
-	ListBlobsIncludeUncommittedblobs ListBlobsIncludeType = "uncommittedblobs"
+	// ListBlobsIncludeItemCopy ...
+	ListBlobsIncludeItemCopy ListBlobsIncludeItemType = "copy"
+	// ListBlobsIncludeItemDeleted ...
+	ListBlobsIncludeItemDeleted ListBlobsIncludeItemType = "deleted"
+	// ListBlobsIncludeItemMetadata ...
+	ListBlobsIncludeItemMetadata ListBlobsIncludeItemType = "metadata"
+	// ListBlobsIncludeItemNone represents an empty ListBlobsIncludeItemType.
+	ListBlobsIncludeItemNone ListBlobsIncludeItemType = ""
+	// ListBlobsIncludeItemSnapshots ...
+	ListBlobsIncludeItemSnapshots ListBlobsIncludeItemType = "snapshots"
+	// ListBlobsIncludeItemUncommittedblobs ...
+	ListBlobsIncludeItemUncommittedblobs ListBlobsIncludeItemType = "uncommittedblobs"
 )
 
 // ListContainersIncludeType enumerates the values for list containers include type.
@@ -266,18 +262,6 @@ const (
 	ListContainersIncludeMetadata ListContainersIncludeType = "metadata"
 	// ListContainersIncludeNone represents an empty ListContainersIncludeType.
 	ListContainersIncludeNone ListContainersIncludeType = ""
-)
-
-// PageWriteType enumerates the values for page write type.
-type PageWriteType string
-
-const (
-	// PageWriteClear ...
-	PageWriteClear PageWriteType = "clear"
-	// PageWriteNone represents an empty PageWriteType.
-	PageWriteNone PageWriteType = ""
-	// PageWriteUpdate ...
-	PageWriteUpdate PageWriteType = "update"
 )
 
 // PublicAccessType enumerates the values for public access type.
@@ -346,6 +330,19 @@ func (ababr AppendBlobsAppendBlockResponse) BlobCommittedBlockCount() string {
 	return ababr.rawResponse.Header.Get("x-ms-blob-committed-block-count")
 }
 
+// ContentMD5 returns the value for header Content-MD5.
+func (ababr AppendBlobsAppendBlockResponse) ContentMD5() []byte {
+	s := ababr.rawResponse.Header.Get("Content-MD5")
+	if s == "" {
+		return nil
+	}
+	b, err := base64.StdEncoding.DecodeString(s)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
 // Date returns the value for header Date.
 func (ababr AppendBlobsAppendBlockResponse) Date() time.Time {
 	s := ababr.rawResponse.Header.Get("Date")
@@ -387,13 +384,98 @@ func (ababr AppendBlobsAppendBlockResponse) Version() string {
 	return ababr.rawResponse.Header.Get("x-ms-version")
 }
 
+// AppendBlobsCreateResponse ...
+type AppendBlobsCreateResponse struct {
+	rawResponse *http.Response
+}
+
+// Response returns the raw HTTP response object.
+func (abcr AppendBlobsCreateResponse) Response() *http.Response {
+	return abcr.rawResponse
+}
+
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (abcr AppendBlobsCreateResponse) StatusCode() int {
+	return abcr.rawResponse.StatusCode
+}
+
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (abcr AppendBlobsCreateResponse) Status() string {
+	return abcr.rawResponse.Status
+}
+
+// ContentMD5 returns the value for header Content-MD5.
+func (abcr AppendBlobsCreateResponse) ContentMD5() []byte {
+	s := abcr.rawResponse.Header.Get("Content-MD5")
+	if s == "" {
+		return nil
+	}
+	b, err := base64.StdEncoding.DecodeString(s)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+// Date returns the value for header Date.
+func (abcr AppendBlobsCreateResponse) Date() time.Time {
+	s := abcr.rawResponse.Header.Get("Date")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// ETag returns the value for header ETag.
+func (abcr AppendBlobsCreateResponse) ETag() ETag {
+	return ETag(abcr.rawResponse.Header.Get("ETag"))
+}
+
+// IsServerEncrypted returns the value for header x-ms-request-server-encrypted.
+func (abcr AppendBlobsCreateResponse) IsServerEncrypted() string {
+	return abcr.rawResponse.Header.Get("x-ms-request-server-encrypted")
+}
+
+// LastModified returns the value for header Last-Modified.
+func (abcr AppendBlobsCreateResponse) LastModified() time.Time {
+	s := abcr.rawResponse.Header.Get("Last-Modified")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// RequestID returns the value for header x-ms-request-id.
+func (abcr AppendBlobsCreateResponse) RequestID() string {
+	return abcr.rawResponse.Header.Get("x-ms-request-id")
+}
+
+// Version returns the value for header x-ms-version.
+func (abcr AppendBlobsCreateResponse) Version() string {
+	return abcr.rawResponse.Header.Get("x-ms-version")
+}
+
 // Blob - An Azure Storage blob
 type Blob struct {
 	Name       string         `xml:"Name"`
 	Deleted    bool           `xml:"Deleted"`
-	Snapshot   time.Time      `xml:"Snapshot"`
+	Snapshot   string         `xml:"Snapshot"`
 	Properties BlobProperties `xml:"Properties"`
 	Metadata   Metadata       `xml:"Metadata"`
+}
+
+// BlobList ...
+type BlobList struct {
+	BlobPrefix []BlobPrefix `xml:"BlobPrefix"`
+	Blob       []Blob       `xml:"Blob"`
 }
 
 // BlobPrefix ...
@@ -410,7 +492,7 @@ type BlobProperties struct {
 	ContentType        *string `xml:"Content-Type"`
 	ContentEncoding    *string `xml:"Content-Encoding"`
 	ContentLanguage    *string `xml:"Content-Language"`
-	ContentMD5         *string `xml:"Content-MD5"`
+	ContentMD5         []byte  `xml:"Content-MD5"`
 	ContentDisposition *string `xml:"Content-Disposition"`
 	CacheControl       *string `xml:"Cache-Control"`
 	BlobSequenceNumber *int32  `xml:"x-ms-blob-sequence-number"`
@@ -424,52 +506,46 @@ type BlobProperties struct {
 	LeaseDuration LeaseDurationType `xml:"LeaseDuration"`
 	CopyID        *string           `xml:"CopyId"`
 	// CopyStatus - Possible values include: 'Pending', 'Success', 'Aborted', 'Failed', 'None'
-	CopyStatus            CopyStatusType `xml:"CopyStatus"`
-	CopySource            *string        `xml:"CopySource"`
-	CopyProgress          *string        `xml:"CopyProgress"`
-	CopyCompletionTime    *time.Time     `xml:"CopyCompletionTime"`
-	CopyStatusDescription *string        `xml:"CopyStatusDescription"`
-	ServerEncrypted       *bool          `xml:"ServerEncrypted"`
-	IncrementalCopy       *bool          `xml:"IncrementalCopy"`
-	DestinationSnapshot   *time.Time     `xml:"DestinationSnapshot"`
+	CopyStatus             CopyStatusType `xml:"CopyStatus"`
+	CopySource             *string        `xml:"CopySource"`
+	CopyProgress           *string        `xml:"CopyProgress"`
+	CopyCompletionTime     *time.Time     `xml:"CopyCompletionTime"`
+	CopyStatusDescription  *string        `xml:"CopyStatusDescription"`
+	ServerEncrypted        *bool          `xml:"ServerEncrypted"`
+	IncrementalCopy        *bool          `xml:"IncrementalCopy"`
+	DestinationSnapshot    *string        `xml:"DestinationSnapshot"`
+	DeletedTime            *time.Time     `xml:"DeletedTime"`
+	RemainingRetentionDays *int32         `xml:"RemainingRetentionDays"`
 	// AccessTier - Possible values include: 'P4', 'P6', 'P10', 'P20', 'P30', 'P40', 'P50', 'Hot', 'Cool', 'Archive', 'None'
 	AccessTier         AccessTierType `xml:"AccessTier"`
 	AccessTierInferred *bool          `xml:"AccessTierInferred"`
 	// ArchiveStatus - Possible values include: 'RehydratePendingToHot', 'RehydratePendingToCool', 'None'
 	ArchiveStatus ArchiveStatusType `xml:"ArchiveStatus"`
-	DeletedTime            *time.Time     `xml:"DeletedTime"`
-	RemainingRetentionDays *int32         `xml:"RemainingRetentionDays"`
 }
 
-// Blobs ...
-type Blobs struct {
-	BlobPrefix []BlobPrefix `xml:"BlobPrefix"`
-	Blob       []Blob       `xml:"Blob"`
-}
-
-// BlobsAbortCopyResponse ...
-type BlobsAbortCopyResponse struct {
+// BlobsAbortCopyFromURLResponse ...
+type BlobsAbortCopyFromURLResponse struct {
 	rawResponse *http.Response
 }
 
 // Response returns the raw HTTP response object.
-func (bacr BlobsAbortCopyResponse) Response() *http.Response {
-	return bacr.rawResponse
+func (bacfur BlobsAbortCopyFromURLResponse) Response() *http.Response {
+	return bacfur.rawResponse
 }
 
 // StatusCode returns the HTTP status code of the response, e.g. 200.
-func (bacr BlobsAbortCopyResponse) StatusCode() int {
-	return bacr.rawResponse.StatusCode
+func (bacfur BlobsAbortCopyFromURLResponse) StatusCode() int {
+	return bacfur.rawResponse.StatusCode
 }
 
 // Status returns the HTTP status message of the response, e.g. "200 OK".
-func (bacr BlobsAbortCopyResponse) Status() string {
-	return bacr.rawResponse.Status
+func (bacfur BlobsAbortCopyFromURLResponse) Status() string {
+	return bacfur.rawResponse.Status
 }
 
 // Date returns the value for header Date.
-func (bacr BlobsAbortCopyResponse) Date() time.Time {
-	s := bacr.rawResponse.Header.Get("Date")
+func (bacfur BlobsAbortCopyFromURLResponse) Date() time.Time {
+	s := bacfur.rawResponse.Header.Get("Date")
 	if s == "" {
 		return time.Time{}
 	}
@@ -481,48 +557,38 @@ func (bacr BlobsAbortCopyResponse) Date() time.Time {
 }
 
 // RequestID returns the value for header x-ms-request-id.
-func (bacr BlobsAbortCopyResponse) RequestID() string {
-	return bacr.rawResponse.Header.Get("x-ms-request-id")
+func (bacfur BlobsAbortCopyFromURLResponse) RequestID() string {
+	return bacfur.rawResponse.Header.Get("x-ms-request-id")
 }
 
 // Version returns the value for header x-ms-version.
-func (bacr BlobsAbortCopyResponse) Version() string {
-	return bacr.rawResponse.Header.Get("x-ms-version")
+func (bacfur BlobsAbortCopyFromURLResponse) Version() string {
+	return bacfur.rawResponse.Header.Get("x-ms-version")
 }
 
-// BlobsCopyResponse ...
-type BlobsCopyResponse struct {
+// BlobsAcquireLeaseResponse ...
+type BlobsAcquireLeaseResponse struct {
 	rawResponse *http.Response
 }
 
 // Response returns the raw HTTP response object.
-func (bcr BlobsCopyResponse) Response() *http.Response {
-	return bcr.rawResponse
+func (balr BlobsAcquireLeaseResponse) Response() *http.Response {
+	return balr.rawResponse
 }
 
 // StatusCode returns the HTTP status code of the response, e.g. 200.
-func (bcr BlobsCopyResponse) StatusCode() int {
-	return bcr.rawResponse.StatusCode
+func (balr BlobsAcquireLeaseResponse) StatusCode() int {
+	return balr.rawResponse.StatusCode
 }
 
 // Status returns the HTTP status message of the response, e.g. "200 OK".
-func (bcr BlobsCopyResponse) Status() string {
-	return bcr.rawResponse.Status
-}
-
-// CopyID returns the value for header x-ms-copy-id.
-func (bcr BlobsCopyResponse) CopyID() string {
-	return bcr.rawResponse.Header.Get("x-ms-copy-id")
-}
-
-// CopyStatus returns the value for header x-ms-copy-status.
-func (bcr BlobsCopyResponse) CopyStatus() CopyStatusType {
-	return CopyStatusType(bcr.rawResponse.Header.Get("x-ms-copy-status"))
+func (balr BlobsAcquireLeaseResponse) Status() string {
+	return balr.rawResponse.Status
 }
 
 // Date returns the value for header Date.
-func (bcr BlobsCopyResponse) Date() time.Time {
-	s := bcr.rawResponse.Header.Get("Date")
+func (balr BlobsAcquireLeaseResponse) Date() time.Time {
+	s := balr.rawResponse.Header.Get("Date")
 	if s == "" {
 		return time.Time{}
 	}
@@ -534,13 +600,219 @@ func (bcr BlobsCopyResponse) Date() time.Time {
 }
 
 // ETag returns the value for header ETag.
-func (bcr BlobsCopyResponse) ETag() ETag {
-	return ETag(bcr.rawResponse.Header.Get("ETag"))
+func (balr BlobsAcquireLeaseResponse) ETag() ETag {
+	return ETag(balr.rawResponse.Header.Get("ETag"))
 }
 
 // LastModified returns the value for header Last-Modified.
-func (bcr BlobsCopyResponse) LastModified() time.Time {
-	s := bcr.rawResponse.Header.Get("Last-Modified")
+func (balr BlobsAcquireLeaseResponse) LastModified() time.Time {
+	s := balr.rawResponse.Header.Get("Last-Modified")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// LeaseID returns the value for header x-ms-lease-id.
+func (balr BlobsAcquireLeaseResponse) LeaseID() string {
+	return balr.rawResponse.Header.Get("x-ms-lease-id")
+}
+
+// RequestID returns the value for header x-ms-request-id.
+func (balr BlobsAcquireLeaseResponse) RequestID() string {
+	return balr.rawResponse.Header.Get("x-ms-request-id")
+}
+
+// Version returns the value for header x-ms-version.
+func (balr BlobsAcquireLeaseResponse) Version() string {
+	return balr.rawResponse.Header.Get("x-ms-version")
+}
+
+// BlobsBreakLeaseResponse ...
+type BlobsBreakLeaseResponse struct {
+	rawResponse *http.Response
+}
+
+// Response returns the raw HTTP response object.
+func (bblr BlobsBreakLeaseResponse) Response() *http.Response {
+	return bblr.rawResponse
+}
+
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (bblr BlobsBreakLeaseResponse) StatusCode() int {
+	return bblr.rawResponse.StatusCode
+}
+
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (bblr BlobsBreakLeaseResponse) Status() string {
+	return bblr.rawResponse.Status
+}
+
+// Date returns the value for header Date.
+func (bblr BlobsBreakLeaseResponse) Date() time.Time {
+	s := bblr.rawResponse.Header.Get("Date")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// ETag returns the value for header ETag.
+func (bblr BlobsBreakLeaseResponse) ETag() ETag {
+	return ETag(bblr.rawResponse.Header.Get("ETag"))
+}
+
+// LastModified returns the value for header Last-Modified.
+func (bblr BlobsBreakLeaseResponse) LastModified() time.Time {
+	s := bblr.rawResponse.Header.Get("Last-Modified")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// LeaseTime returns the value for header x-ms-lease-time.
+func (bblr BlobsBreakLeaseResponse) LeaseTime() int32 {
+	s := bblr.rawResponse.Header.Get("x-ms-lease-time")
+	if s == "" {
+		return -1
+	}
+	i, err := strconv.ParseInt(s, 10, 32)
+	if err != nil {
+		panic(err)
+	}
+	return int32(i)
+}
+
+// RequestID returns the value for header x-ms-request-id.
+func (bblr BlobsBreakLeaseResponse) RequestID() string {
+	return bblr.rawResponse.Header.Get("x-ms-request-id")
+}
+
+// Version returns the value for header x-ms-version.
+func (bblr BlobsBreakLeaseResponse) Version() string {
+	return bblr.rawResponse.Header.Get("x-ms-version")
+}
+
+// BlobsChangeLeaseResponse ...
+type BlobsChangeLeaseResponse struct {
+	rawResponse *http.Response
+}
+
+// Response returns the raw HTTP response object.
+func (bclr BlobsChangeLeaseResponse) Response() *http.Response {
+	return bclr.rawResponse
+}
+
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (bclr BlobsChangeLeaseResponse) StatusCode() int {
+	return bclr.rawResponse.StatusCode
+}
+
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (bclr BlobsChangeLeaseResponse) Status() string {
+	return bclr.rawResponse.Status
+}
+
+// Date returns the value for header Date.
+func (bclr BlobsChangeLeaseResponse) Date() time.Time {
+	s := bclr.rawResponse.Header.Get("Date")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// ETag returns the value for header ETag.
+func (bclr BlobsChangeLeaseResponse) ETag() ETag {
+	return ETag(bclr.rawResponse.Header.Get("ETag"))
+}
+
+// LastModified returns the value for header Last-Modified.
+func (bclr BlobsChangeLeaseResponse) LastModified() time.Time {
+	s := bclr.rawResponse.Header.Get("Last-Modified")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// LeaseID returns the value for header x-ms-lease-id.
+func (bclr BlobsChangeLeaseResponse) LeaseID() string {
+	return bclr.rawResponse.Header.Get("x-ms-lease-id")
+}
+
+// RequestID returns the value for header x-ms-request-id.
+func (bclr BlobsChangeLeaseResponse) RequestID() string {
+	return bclr.rawResponse.Header.Get("x-ms-request-id")
+}
+
+// Version returns the value for header x-ms-version.
+func (bclr BlobsChangeLeaseResponse) Version() string {
+	return bclr.rawResponse.Header.Get("x-ms-version")
+}
+
+// BlobsCreateSnapshotResponse ...
+type BlobsCreateSnapshotResponse struct {
+	rawResponse *http.Response
+}
+
+// Response returns the raw HTTP response object.
+func (bcsr BlobsCreateSnapshotResponse) Response() *http.Response {
+	return bcsr.rawResponse
+}
+
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (bcsr BlobsCreateSnapshotResponse) StatusCode() int {
+	return bcsr.rawResponse.StatusCode
+}
+
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (bcsr BlobsCreateSnapshotResponse) Status() string {
+	return bcsr.rawResponse.Status
+}
+
+// Date returns the value for header Date.
+func (bcsr BlobsCreateSnapshotResponse) Date() time.Time {
+	s := bcsr.rawResponse.Header.Get("Date")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// ETag returns the value for header ETag.
+func (bcsr BlobsCreateSnapshotResponse) ETag() ETag {
+	return ETag(bcsr.rawResponse.Header.Get("ETag"))
+}
+
+// LastModified returns the value for header Last-Modified.
+func (bcsr BlobsCreateSnapshotResponse) LastModified() time.Time {
+	s := bcsr.rawResponse.Header.Get("Last-Modified")
 	if s == "" {
 		return time.Time{}
 	}
@@ -552,13 +824,18 @@ func (bcr BlobsCopyResponse) LastModified() time.Time {
 }
 
 // RequestID returns the value for header x-ms-request-id.
-func (bcr BlobsCopyResponse) RequestID() string {
-	return bcr.rawResponse.Header.Get("x-ms-request-id")
+func (bcsr BlobsCreateSnapshotResponse) RequestID() string {
+	return bcsr.rawResponse.Header.Get("x-ms-request-id")
+}
+
+// Snapshot returns the value for header x-ms-snapshot.
+func (bcsr BlobsCreateSnapshotResponse) Snapshot() string {
+	return bcsr.rawResponse.Header.Get("x-ms-snapshot")
 }
 
 // Version returns the value for header x-ms-version.
-func (bcr BlobsCopyResponse) Version() string {
-	return bcr.rawResponse.Header.Get("x-ms-version")
+func (bcsr BlobsCreateSnapshotResponse) Version() string {
+	return bcsr.rawResponse.Header.Get("x-ms-version")
 }
 
 // BlobsDeleteResponse ...
@@ -602,80 +879,6 @@ func (bdr BlobsDeleteResponse) RequestID() string {
 // Version returns the value for header x-ms-version.
 func (bdr BlobsDeleteResponse) Version() string {
 	return bdr.rawResponse.Header.Get("x-ms-version")
-}
-
-// BlobsGetMetadataResponse ...
-type BlobsGetMetadataResponse struct {
-	rawResponse *http.Response
-}
-
-// Response returns the raw HTTP response object.
-func (bgmr BlobsGetMetadataResponse) Response() *http.Response {
-	return bgmr.rawResponse
-}
-
-// StatusCode returns the HTTP status code of the response, e.g. 200.
-func (bgmr BlobsGetMetadataResponse) StatusCode() int {
-	return bgmr.rawResponse.StatusCode
-}
-
-// Status returns the HTTP status message of the response, e.g. "200 OK".
-func (bgmr BlobsGetMetadataResponse) Status() string {
-	return bgmr.rawResponse.Status
-}
-
-// Date returns the value for header Date.
-func (bgmr BlobsGetMetadataResponse) Date() time.Time {
-	s := bgmr.rawResponse.Header.Get("Date")
-	if s == "" {
-		return time.Time{}
-	}
-	t, err := time.Parse(time.RFC1123, s)
-	if err != nil {
-		panic(err)
-	}
-	return t
-}
-
-// ETag returns the value for header ETag.
-func (bgmr BlobsGetMetadataResponse) ETag() ETag {
-	return ETag(bgmr.rawResponse.Header.Get("ETag"))
-}
-
-// LastModified returns the value for header Last-Modified.
-func (bgmr BlobsGetMetadataResponse) LastModified() time.Time {
-	s := bgmr.rawResponse.Header.Get("Last-Modified")
-	if s == "" {
-		return time.Time{}
-	}
-	t, err := time.Parse(time.RFC1123, s)
-	if err != nil {
-		panic(err)
-	}
-	return t
-}
-
-// RequestID returns the value for header x-ms-request-id.
-func (bgmr BlobsGetMetadataResponse) RequestID() string {
-	return bgmr.rawResponse.Header.Get("x-ms-request-id")
-}
-
-// Version returns the value for header x-ms-version.
-func (bgmr BlobsGetMetadataResponse) Version() string {
-	return bgmr.rawResponse.Header.Get("x-ms-version")
-}
-
-// NewMetadata returns user-defined key/value pairs.
-func (bgmr BlobsGetMetadataResponse) NewMetadata() Metadata {
-	md := Metadata{}
-	for k, v := range bgmr.rawResponse.Header {
-		if len(k) > mdPrefixLen {
-			if prefix := k[0:mdPrefixLen]; strings.EqualFold(prefix, mdPrefix) {
-				md[strings.ToLower(k[mdPrefixLen:])] = v[0]
-			}
-		}
-	}
-	return md
 }
 
 // BlobsGetPropertiesResponse ...
@@ -724,8 +927,16 @@ func (bgpr BlobsGetPropertiesResponse) BlobCommittedBlockCount() string {
 }
 
 // BlobSequenceNumber returns the value for header x-ms-blob-sequence-number.
-func (bgpr BlobsGetPropertiesResponse) BlobSequenceNumber() string {
-	return bgpr.rawResponse.Header.Get("x-ms-blob-sequence-number")
+func (bgpr BlobsGetPropertiesResponse) BlobSequenceNumber() int64 {
+	s := bgpr.rawResponse.Header.Get("x-ms-blob-sequence-number")
+	if s == "" {
+		return -1
+	}
+	i, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		panic(err)
+	}
+	return i
 }
 
 // BlobType returns the value for header x-ms-blob-type.
@@ -764,6 +975,19 @@ func (bgpr BlobsGetPropertiesResponse) ContentLength() int64 {
 		panic(err)
 	}
 	return i
+}
+
+// ContentMD5 returns the value for header Content-MD5.
+func (bgpr BlobsGetPropertiesResponse) ContentMD5() []byte {
+	s := bgpr.rawResponse.Header.Get("Content-MD5")
+	if s == "" {
+		return nil
+	}
+	b, err := base64.StdEncoding.DecodeString(s)
+	if err != nil {
+		panic(err)
+	}
+	return b
 }
 
 // ContentType returns the value for header Content-Type.
@@ -823,16 +1047,8 @@ func (bgpr BlobsGetPropertiesResponse) Date() time.Time {
 }
 
 // DestinationSnapshot returns the value for header x-ms-copy-destination-snapshot.
-func (bgpr BlobsGetPropertiesResponse) DestinationSnapshot() time.Time {
-	s := bgpr.rawResponse.Header.Get("x-ms-copy-destination-snapshot")
-	if s == "" {
-		return time.Time{}
-	}
-	t, err := time.Parse(rfc3339Format, s)
-	if err != nil {
-		panic(err)
-	}
-	return t
+func (bgpr BlobsGetPropertiesResponse) DestinationSnapshot() string {
+	return bgpr.rawResponse.Header.Get("x-ms-copy-destination-snapshot")
 }
 
 // ETag returns the value for header ETag.
@@ -901,29 +1117,29 @@ func (bgpr BlobsGetPropertiesResponse) NewMetadata() Metadata {
 	return md
 }
 
-// BlobsLeaseResponse ...
-type BlobsLeaseResponse struct {
+// BlobsReleaseLeaseResponse ...
+type BlobsReleaseLeaseResponse struct {
 	rawResponse *http.Response
 }
 
 // Response returns the raw HTTP response object.
-func (blr BlobsLeaseResponse) Response() *http.Response {
-	return blr.rawResponse
+func (brlr BlobsReleaseLeaseResponse) Response() *http.Response {
+	return brlr.rawResponse
 }
 
 // StatusCode returns the HTTP status code of the response, e.g. 200.
-func (blr BlobsLeaseResponse) StatusCode() int {
-	return blr.rawResponse.StatusCode
+func (brlr BlobsReleaseLeaseResponse) StatusCode() int {
+	return brlr.rawResponse.StatusCode
 }
 
 // Status returns the HTTP status message of the response, e.g. "200 OK".
-func (blr BlobsLeaseResponse) Status() string {
-	return blr.rawResponse.Status
+func (brlr BlobsReleaseLeaseResponse) Status() string {
+	return brlr.rawResponse.Status
 }
 
 // Date returns the value for header Date.
-func (blr BlobsLeaseResponse) Date() time.Time {
-	s := blr.rawResponse.Header.Get("Date")
+func (brlr BlobsReleaseLeaseResponse) Date() time.Time {
+	s := brlr.rawResponse.Header.Get("Date")
 	if s == "" {
 		return time.Time{}
 	}
@@ -935,13 +1151,74 @@ func (blr BlobsLeaseResponse) Date() time.Time {
 }
 
 // ETag returns the value for header ETag.
-func (blr BlobsLeaseResponse) ETag() ETag {
-	return ETag(blr.rawResponse.Header.Get("ETag"))
+func (brlr BlobsReleaseLeaseResponse) ETag() ETag {
+	return ETag(brlr.rawResponse.Header.Get("ETag"))
 }
 
 // LastModified returns the value for header Last-Modified.
-func (blr BlobsLeaseResponse) LastModified() time.Time {
-	s := blr.rawResponse.Header.Get("Last-Modified")
+func (brlr BlobsReleaseLeaseResponse) LastModified() time.Time {
+	s := brlr.rawResponse.Header.Get("Last-Modified")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// RequestID returns the value for header x-ms-request-id.
+func (brlr BlobsReleaseLeaseResponse) RequestID() string {
+	return brlr.rawResponse.Header.Get("x-ms-request-id")
+}
+
+// Version returns the value for header x-ms-version.
+func (brlr BlobsReleaseLeaseResponse) Version() string {
+	return brlr.rawResponse.Header.Get("x-ms-version")
+}
+
+// BlobsRenewLeaseResponse ...
+type BlobsRenewLeaseResponse struct {
+	rawResponse *http.Response
+}
+
+// Response returns the raw HTTP response object.
+func (brlr BlobsRenewLeaseResponse) Response() *http.Response {
+	return brlr.rawResponse
+}
+
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (brlr BlobsRenewLeaseResponse) StatusCode() int {
+	return brlr.rawResponse.StatusCode
+}
+
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (brlr BlobsRenewLeaseResponse) Status() string {
+	return brlr.rawResponse.Status
+}
+
+// Date returns the value for header Date.
+func (brlr BlobsRenewLeaseResponse) Date() time.Time {
+	s := brlr.rawResponse.Header.Get("Date")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// ETag returns the value for header ETag.
+func (brlr BlobsRenewLeaseResponse) ETag() ETag {
+	return ETag(brlr.rawResponse.Header.Get("ETag"))
+}
+
+// LastModified returns the value for header Last-Modified.
+func (brlr BlobsRenewLeaseResponse) LastModified() time.Time {
+	s := brlr.rawResponse.Header.Get("Last-Modified")
 	if s == "" {
 		return time.Time{}
 	}
@@ -953,56 +1230,48 @@ func (blr BlobsLeaseResponse) LastModified() time.Time {
 }
 
 // LeaseID returns the value for header x-ms-lease-id.
-func (blr BlobsLeaseResponse) LeaseID() string {
-	return blr.rawResponse.Header.Get("x-ms-lease-id")
-}
-
-// LeaseTime returns the value for header x-ms-lease-time.
-func (blr BlobsLeaseResponse) LeaseTime() int32 {
-	s := blr.rawResponse.Header.Get("x-ms-lease-time")
-	if s == "" {
-		return -1
-	}
-	i, err := strconv.ParseInt(s, 10, 32)
-	if err != nil {
-		panic(err)
-	}
-	return int32(i)
+func (brlr BlobsRenewLeaseResponse) LeaseID() string {
+	return brlr.rawResponse.Header.Get("x-ms-lease-id")
 }
 
 // RequestID returns the value for header x-ms-request-id.
-func (blr BlobsLeaseResponse) RequestID() string {
-	return blr.rawResponse.Header.Get("x-ms-request-id")
+func (brlr BlobsRenewLeaseResponse) RequestID() string {
+	return brlr.rawResponse.Header.Get("x-ms-request-id")
 }
 
 // Version returns the value for header x-ms-version.
-func (blr BlobsLeaseResponse) Version() string {
-	return blr.rawResponse.Header.Get("x-ms-version")
+func (brlr BlobsRenewLeaseResponse) Version() string {
+	return brlr.rawResponse.Header.Get("x-ms-version")
 }
 
-// BlobsPutResponse ...
-type BlobsPutResponse struct {
+// BlobsSetHTTPHeadersResponse ...
+type BlobsSetHTTPHeadersResponse struct {
 	rawResponse *http.Response
 }
 
 // Response returns the raw HTTP response object.
-func (bpr BlobsPutResponse) Response() *http.Response {
-	return bpr.rawResponse
+func (bshhr BlobsSetHTTPHeadersResponse) Response() *http.Response {
+	return bshhr.rawResponse
 }
 
 // StatusCode returns the HTTP status code of the response, e.g. 200.
-func (bpr BlobsPutResponse) StatusCode() int {
-	return bpr.rawResponse.StatusCode
+func (bshhr BlobsSetHTTPHeadersResponse) StatusCode() int {
+	return bshhr.rawResponse.StatusCode
 }
 
 // Status returns the HTTP status message of the response, e.g. "200 OK".
-func (bpr BlobsPutResponse) Status() string {
-	return bpr.rawResponse.Status
+func (bshhr BlobsSetHTTPHeadersResponse) Status() string {
+	return bshhr.rawResponse.Status
+}
+
+// BlobSequenceNumber returns the value for header x-ms-blob-sequence-number.
+func (bshhr BlobsSetHTTPHeadersResponse) BlobSequenceNumber() string {
+	return bshhr.rawResponse.Header.Get("x-ms-blob-sequence-number")
 }
 
 // Date returns the value for header Date.
-func (bpr BlobsPutResponse) Date() time.Time {
-	s := bpr.rawResponse.Header.Get("Date")
+func (bshhr BlobsSetHTTPHeadersResponse) Date() time.Time {
+	s := bshhr.rawResponse.Header.Get("Date")
 	if s == "" {
 		return time.Time{}
 	}
@@ -1014,18 +1283,13 @@ func (bpr BlobsPutResponse) Date() time.Time {
 }
 
 // ETag returns the value for header ETag.
-func (bpr BlobsPutResponse) ETag() ETag {
-	return ETag(bpr.rawResponse.Header.Get("ETag"))
-}
-
-// IsServerEncrypted returns the value for header x-ms-request-server-encrypted.
-func (bpr BlobsPutResponse) IsServerEncrypted() string {
-	return bpr.rawResponse.Header.Get("x-ms-request-server-encrypted")
+func (bshhr BlobsSetHTTPHeadersResponse) ETag() ETag {
+	return ETag(bshhr.rawResponse.Header.Get("ETag"))
 }
 
 // LastModified returns the value for header Last-Modified.
-func (bpr BlobsPutResponse) LastModified() time.Time {
-	s := bpr.rawResponse.Header.Get("Last-Modified")
+func (bshhr BlobsSetHTTPHeadersResponse) LastModified() time.Time {
+	s := bshhr.rawResponse.Header.Get("Last-Modified")
 	if s == "" {
 		return time.Time{}
 	}
@@ -1037,38 +1301,13 @@ func (bpr BlobsPutResponse) LastModified() time.Time {
 }
 
 // RequestID returns the value for header x-ms-request-id.
-func (bpr BlobsPutResponse) RequestID() string {
-	return bpr.rawResponse.Header.Get("x-ms-request-id")
+func (bshhr BlobsSetHTTPHeadersResponse) RequestID() string {
+	return bshhr.rawResponse.Header.Get("x-ms-request-id")
 }
 
 // Version returns the value for header x-ms-version.
-func (bpr BlobsPutResponse) Version() string {
-	return bpr.rawResponse.Header.Get("x-ms-version")
-}
-
-// BlobsSetBlobTierResponse ...
-type BlobsSetBlobTierResponse struct {
-	rawResponse *http.Response
-}
-
-// Response returns the raw HTTP response object.
-func (bsbtr BlobsSetBlobTierResponse) Response() *http.Response {
-	return bsbtr.rawResponse
-}
-
-// StatusCode returns the HTTP status code of the response, e.g. 200.
-func (bsbtr BlobsSetBlobTierResponse) StatusCode() int {
-	return bsbtr.rawResponse.StatusCode
-}
-
-// Status returns the HTTP status message of the response, e.g. "200 OK".
-func (bsbtr BlobsSetBlobTierResponse) Status() string {
-	return bsbtr.rawResponse.Status
-}
-
-// RequestID returns the value for header x-ms-request-id.
-func (bsbtr BlobsSetBlobTierResponse) RequestID() string {
-	return bsbtr.rawResponse.Header.Get("x-ms-request-id")
+func (bshhr BlobsSetHTTPHeadersResponse) Version() string {
+	return bshhr.rawResponse.Header.Get("x-ms-version")
 }
 
 // BlobsSetMetadataResponse ...
@@ -1137,34 +1376,69 @@ func (bsmr BlobsSetMetadataResponse) Version() string {
 	return bsmr.rawResponse.Header.Get("x-ms-version")
 }
 
-// BlobsSetPropertiesResponse ...
-type BlobsSetPropertiesResponse struct {
+// BlobsSetTierResponse ...
+type BlobsSetTierResponse struct {
 	rawResponse *http.Response
 }
 
 // Response returns the raw HTTP response object.
-func (bspr BlobsSetPropertiesResponse) Response() *http.Response {
-	return bspr.rawResponse
+func (bstr BlobsSetTierResponse) Response() *http.Response {
+	return bstr.rawResponse
 }
 
 // StatusCode returns the HTTP status code of the response, e.g. 200.
-func (bspr BlobsSetPropertiesResponse) StatusCode() int {
-	return bspr.rawResponse.StatusCode
+func (bstr BlobsSetTierResponse) StatusCode() int {
+	return bstr.rawResponse.StatusCode
 }
 
 // Status returns the HTTP status message of the response, e.g. "200 OK".
-func (bspr BlobsSetPropertiesResponse) Status() string {
-	return bspr.rawResponse.Status
+func (bstr BlobsSetTierResponse) Status() string {
+	return bstr.rawResponse.Status
 }
 
-// BlobSequenceNumber returns the value for header x-ms-blob-sequence-number.
-func (bspr BlobsSetPropertiesResponse) BlobSequenceNumber() string {
-	return bspr.rawResponse.Header.Get("x-ms-blob-sequence-number")
+// RequestID returns the value for header x-ms-request-id.
+func (bstr BlobsSetTierResponse) RequestID() string {
+	return bstr.rawResponse.Header.Get("x-ms-request-id")
+}
+
+// Version returns the value for header x-ms-version.
+func (bstr BlobsSetTierResponse) Version() string {
+	return bstr.rawResponse.Header.Get("x-ms-version")
+}
+
+// BlobsStartCopyFromURLResponse ...
+type BlobsStartCopyFromURLResponse struct {
+	rawResponse *http.Response
+}
+
+// Response returns the raw HTTP response object.
+func (bscfur BlobsStartCopyFromURLResponse) Response() *http.Response {
+	return bscfur.rawResponse
+}
+
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (bscfur BlobsStartCopyFromURLResponse) StatusCode() int {
+	return bscfur.rawResponse.StatusCode
+}
+
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (bscfur BlobsStartCopyFromURLResponse) Status() string {
+	return bscfur.rawResponse.Status
+}
+
+// CopyID returns the value for header x-ms-copy-id.
+func (bscfur BlobsStartCopyFromURLResponse) CopyID() string {
+	return bscfur.rawResponse.Header.Get("x-ms-copy-id")
+}
+
+// CopyStatus returns the value for header x-ms-copy-status.
+func (bscfur BlobsStartCopyFromURLResponse) CopyStatus() CopyStatusType {
+	return CopyStatusType(bscfur.rawResponse.Header.Get("x-ms-copy-status"))
 }
 
 // Date returns the value for header Date.
-func (bspr BlobsSetPropertiesResponse) Date() time.Time {
-	s := bspr.rawResponse.Header.Get("Date")
+func (bscfur BlobsStartCopyFromURLResponse) Date() time.Time {
+	s := bscfur.rawResponse.Header.Get("Date")
 	if s == "" {
 		return time.Time{}
 	}
@@ -1176,13 +1450,13 @@ func (bspr BlobsSetPropertiesResponse) Date() time.Time {
 }
 
 // ETag returns the value for header ETag.
-func (bspr BlobsSetPropertiesResponse) ETag() ETag {
-	return ETag(bspr.rawResponse.Header.Get("ETag"))
+func (bscfur BlobsStartCopyFromURLResponse) ETag() ETag {
+	return ETag(bscfur.rawResponse.Header.Get("ETag"))
 }
 
 // LastModified returns the value for header Last-Modified.
-func (bspr BlobsSetPropertiesResponse) LastModified() time.Time {
-	s := bspr.rawResponse.Header.Get("Last-Modified")
+func (bscfur BlobsStartCopyFromURLResponse) LastModified() time.Time {
+	s := bscfur.rawResponse.Header.Get("Last-Modified")
 	if s == "" {
 		return time.Time{}
 	}
@@ -1194,87 +1468,13 @@ func (bspr BlobsSetPropertiesResponse) LastModified() time.Time {
 }
 
 // RequestID returns the value for header x-ms-request-id.
-func (bspr BlobsSetPropertiesResponse) RequestID() string {
-	return bspr.rawResponse.Header.Get("x-ms-request-id")
+func (bscfur BlobsStartCopyFromURLResponse) RequestID() string {
+	return bscfur.rawResponse.Header.Get("x-ms-request-id")
 }
 
 // Version returns the value for header x-ms-version.
-func (bspr BlobsSetPropertiesResponse) Version() string {
-	return bspr.rawResponse.Header.Get("x-ms-version")
-}
-
-// BlobsTakeSnapshotResponse ...
-type BlobsTakeSnapshotResponse struct {
-	rawResponse *http.Response
-}
-
-// Response returns the raw HTTP response object.
-func (btsr BlobsTakeSnapshotResponse) Response() *http.Response {
-	return btsr.rawResponse
-}
-
-// StatusCode returns the HTTP status code of the response, e.g. 200.
-func (btsr BlobsTakeSnapshotResponse) StatusCode() int {
-	return btsr.rawResponse.StatusCode
-}
-
-// Status returns the HTTP status message of the response, e.g. "200 OK".
-func (btsr BlobsTakeSnapshotResponse) Status() string {
-	return btsr.rawResponse.Status
-}
-
-// Date returns the value for header Date.
-func (btsr BlobsTakeSnapshotResponse) Date() time.Time {
-	s := btsr.rawResponse.Header.Get("Date")
-	if s == "" {
-		return time.Time{}
-	}
-	t, err := time.Parse(time.RFC1123, s)
-	if err != nil {
-		panic(err)
-	}
-	return t
-}
-
-// ETag returns the value for header ETag.
-func (btsr BlobsTakeSnapshotResponse) ETag() ETag {
-	return ETag(btsr.rawResponse.Header.Get("ETag"))
-}
-
-// LastModified returns the value for header Last-Modified.
-func (btsr BlobsTakeSnapshotResponse) LastModified() time.Time {
-	s := btsr.rawResponse.Header.Get("Last-Modified")
-	if s == "" {
-		return time.Time{}
-	}
-	t, err := time.Parse(time.RFC1123, s)
-	if err != nil {
-		panic(err)
-	}
-	return t
-}
-
-// RequestID returns the value for header x-ms-request-id.
-func (btsr BlobsTakeSnapshotResponse) RequestID() string {
-	return btsr.rawResponse.Header.Get("x-ms-request-id")
-}
-
-// Snapshot returns the value for header x-ms-snapshot.
-func (btsr BlobsTakeSnapshotResponse) Snapshot() time.Time {
-	s := btsr.rawResponse.Header.Get("x-ms-snapshot")
-	if s == "" {
-		return time.Time{}
-	}
-	t, err := time.Parse(rfc3339Format, s)
-	if err != nil {
-		panic(err)
-	}
-	return t
-}
-
-// Version returns the value for header x-ms-version.
-func (btsr BlobsTakeSnapshotResponse) Version() string {
-	return btsr.rawResponse.Header.Get("x-ms-version")
+func (bscfur BlobsStartCopyFromURLResponse) Version() string {
+	return bscfur.rawResponse.Header.Get("x-ms-version")
 }
 
 // BlobsUndeleteResponse ...
@@ -1328,29 +1528,42 @@ type Block struct {
 	Size int32 `xml:"Size"`
 }
 
-// BlockBlobsPutBlockListResponse ...
-type BlockBlobsPutBlockListResponse struct {
+// BlockBlobsCommitBlockListResponse ...
+type BlockBlobsCommitBlockListResponse struct {
 	rawResponse *http.Response
 }
 
 // Response returns the raw HTTP response object.
-func (bbpblr BlockBlobsPutBlockListResponse) Response() *http.Response {
-	return bbpblr.rawResponse
+func (bbcblr BlockBlobsCommitBlockListResponse) Response() *http.Response {
+	return bbcblr.rawResponse
 }
 
 // StatusCode returns the HTTP status code of the response, e.g. 200.
-func (bbpblr BlockBlobsPutBlockListResponse) StatusCode() int {
-	return bbpblr.rawResponse.StatusCode
+func (bbcblr BlockBlobsCommitBlockListResponse) StatusCode() int {
+	return bbcblr.rawResponse.StatusCode
 }
 
 // Status returns the HTTP status message of the response, e.g. "200 OK".
-func (bbpblr BlockBlobsPutBlockListResponse) Status() string {
-	return bbpblr.rawResponse.Status
+func (bbcblr BlockBlobsCommitBlockListResponse) Status() string {
+	return bbcblr.rawResponse.Status
+}
+
+// ContentMD5 returns the value for header Content-MD5.
+func (bbcblr BlockBlobsCommitBlockListResponse) ContentMD5() []byte {
+	s := bbcblr.rawResponse.Header.Get("Content-MD5")
+	if s == "" {
+		return nil
+	}
+	b, err := base64.StdEncoding.DecodeString(s)
+	if err != nil {
+		panic(err)
+	}
+	return b
 }
 
 // Date returns the value for header Date.
-func (bbpblr BlockBlobsPutBlockListResponse) Date() time.Time {
-	s := bbpblr.rawResponse.Header.Get("Date")
+func (bbcblr BlockBlobsCommitBlockListResponse) Date() time.Time {
+	s := bbcblr.rawResponse.Header.Get("Date")
 	if s == "" {
 		return time.Time{}
 	}
@@ -1362,18 +1575,18 @@ func (bbpblr BlockBlobsPutBlockListResponse) Date() time.Time {
 }
 
 // ETag returns the value for header ETag.
-func (bbpblr BlockBlobsPutBlockListResponse) ETag() ETag {
-	return ETag(bbpblr.rawResponse.Header.Get("ETag"))
+func (bbcblr BlockBlobsCommitBlockListResponse) ETag() ETag {
+	return ETag(bbcblr.rawResponse.Header.Get("ETag"))
 }
 
 // IsServerEncrypted returns the value for header x-ms-request-server-encrypted.
-func (bbpblr BlockBlobsPutBlockListResponse) IsServerEncrypted() string {
-	return bbpblr.rawResponse.Header.Get("x-ms-request-server-encrypted")
+func (bbcblr BlockBlobsCommitBlockListResponse) IsServerEncrypted() string {
+	return bbcblr.rawResponse.Header.Get("x-ms-request-server-encrypted")
 }
 
 // LastModified returns the value for header Last-Modified.
-func (bbpblr BlockBlobsPutBlockListResponse) LastModified() time.Time {
-	s := bbpblr.rawResponse.Header.Get("Last-Modified")
+func (bbcblr BlockBlobsCommitBlockListResponse) LastModified() time.Time {
+	s := bbcblr.rawResponse.Header.Get("Last-Modified")
 	if s == "" {
 		return time.Time{}
 	}
@@ -1385,38 +1598,51 @@ func (bbpblr BlockBlobsPutBlockListResponse) LastModified() time.Time {
 }
 
 // RequestID returns the value for header x-ms-request-id.
-func (bbpblr BlockBlobsPutBlockListResponse) RequestID() string {
-	return bbpblr.rawResponse.Header.Get("x-ms-request-id")
+func (bbcblr BlockBlobsCommitBlockListResponse) RequestID() string {
+	return bbcblr.rawResponse.Header.Get("x-ms-request-id")
 }
 
 // Version returns the value for header x-ms-version.
-func (bbpblr BlockBlobsPutBlockListResponse) Version() string {
-	return bbpblr.rawResponse.Header.Get("x-ms-version")
+func (bbcblr BlockBlobsCommitBlockListResponse) Version() string {
+	return bbcblr.rawResponse.Header.Get("x-ms-version")
 }
 
-// BlockBlobsPutBlockResponse ...
-type BlockBlobsPutBlockResponse struct {
+// BlockBlobsStageBlockResponse ...
+type BlockBlobsStageBlockResponse struct {
 	rawResponse *http.Response
 }
 
 // Response returns the raw HTTP response object.
-func (bbpbr BlockBlobsPutBlockResponse) Response() *http.Response {
-	return bbpbr.rawResponse
+func (bbsbr BlockBlobsStageBlockResponse) Response() *http.Response {
+	return bbsbr.rawResponse
 }
 
 // StatusCode returns the HTTP status code of the response, e.g. 200.
-func (bbpbr BlockBlobsPutBlockResponse) StatusCode() int {
-	return bbpbr.rawResponse.StatusCode
+func (bbsbr BlockBlobsStageBlockResponse) StatusCode() int {
+	return bbsbr.rawResponse.StatusCode
 }
 
 // Status returns the HTTP status message of the response, e.g. "200 OK".
-func (bbpbr BlockBlobsPutBlockResponse) Status() string {
-	return bbpbr.rawResponse.Status
+func (bbsbr BlockBlobsStageBlockResponse) Status() string {
+	return bbsbr.rawResponse.Status
+}
+
+// ContentMD5 returns the value for header Content-MD5.
+func (bbsbr BlockBlobsStageBlockResponse) ContentMD5() []byte {
+	s := bbsbr.rawResponse.Header.Get("Content-MD5")
+	if s == "" {
+		return nil
+	}
+	b, err := base64.StdEncoding.DecodeString(s)
+	if err != nil {
+		panic(err)
+	}
+	return b
 }
 
 // Date returns the value for header Date.
-func (bbpbr BlockBlobsPutBlockResponse) Date() time.Time {
-	s := bbpbr.rawResponse.Header.Get("Date")
+func (bbsbr BlockBlobsStageBlockResponse) Date() time.Time {
+	s := bbsbr.rawResponse.Header.Get("Date")
 	if s == "" {
 		return time.Time{}
 	}
@@ -1428,18 +1654,97 @@ func (bbpbr BlockBlobsPutBlockResponse) Date() time.Time {
 }
 
 // IsServerEncrypted returns the value for header x-ms-request-server-encrypted.
-func (bbpbr BlockBlobsPutBlockResponse) IsServerEncrypted() string {
-	return bbpbr.rawResponse.Header.Get("x-ms-request-server-encrypted")
+func (bbsbr BlockBlobsStageBlockResponse) IsServerEncrypted() string {
+	return bbsbr.rawResponse.Header.Get("x-ms-request-server-encrypted")
 }
 
 // RequestID returns the value for header x-ms-request-id.
-func (bbpbr BlockBlobsPutBlockResponse) RequestID() string {
-	return bbpbr.rawResponse.Header.Get("x-ms-request-id")
+func (bbsbr BlockBlobsStageBlockResponse) RequestID() string {
+	return bbsbr.rawResponse.Header.Get("x-ms-request-id")
 }
 
 // Version returns the value for header x-ms-version.
-func (bbpbr BlockBlobsPutBlockResponse) Version() string {
-	return bbpbr.rawResponse.Header.Get("x-ms-version")
+func (bbsbr BlockBlobsStageBlockResponse) Version() string {
+	return bbsbr.rawResponse.Header.Get("x-ms-version")
+}
+
+// BlockBlobsUploadResponse ...
+type BlockBlobsUploadResponse struct {
+	rawResponse *http.Response
+}
+
+// Response returns the raw HTTP response object.
+func (bbur BlockBlobsUploadResponse) Response() *http.Response {
+	return bbur.rawResponse
+}
+
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (bbur BlockBlobsUploadResponse) StatusCode() int {
+	return bbur.rawResponse.StatusCode
+}
+
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (bbur BlockBlobsUploadResponse) Status() string {
+	return bbur.rawResponse.Status
+}
+
+// ContentMD5 returns the value for header Content-MD5.
+func (bbur BlockBlobsUploadResponse) ContentMD5() []byte {
+	s := bbur.rawResponse.Header.Get("Content-MD5")
+	if s == "" {
+		return nil
+	}
+	b, err := base64.StdEncoding.DecodeString(s)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+// Date returns the value for header Date.
+func (bbur BlockBlobsUploadResponse) Date() time.Time {
+	s := bbur.rawResponse.Header.Get("Date")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// ETag returns the value for header ETag.
+func (bbur BlockBlobsUploadResponse) ETag() ETag {
+	return ETag(bbur.rawResponse.Header.Get("ETag"))
+}
+
+// IsServerEncrypted returns the value for header x-ms-request-server-encrypted.
+func (bbur BlockBlobsUploadResponse) IsServerEncrypted() string {
+	return bbur.rawResponse.Header.Get("x-ms-request-server-encrypted")
+}
+
+// LastModified returns the value for header Last-Modified.
+func (bbur BlockBlobsUploadResponse) LastModified() time.Time {
+	s := bbur.rawResponse.Header.Get("Last-Modified")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// RequestID returns the value for header x-ms-request-id.
+func (bbur BlockBlobsUploadResponse) RequestID() string {
+	return bbur.rawResponse.Header.Get("x-ms-request-id")
+}
+
+// Version returns the value for header x-ms-version.
+func (bbur BlockBlobsUploadResponse) Version() string {
+	return bbur.rawResponse.Header.Get("x-ms-version")
 }
 
 // BlockList ...
@@ -1534,8 +1839,8 @@ type BlockLookupList struct {
 
 // ClearRange ...
 type ClearRange struct {
-	Start int32 `xml:"Start"`
-	End   int32 `xml:"End"`
+	Start int64 `xml:"Start"`
+	End   int64 `xml:"End"`
 }
 
 // Container - An Azure Storage container
@@ -1543,357 +1848,6 @@ type Container struct {
 	Name       string              `xml:"Name"`
 	Properties ContainerProperties `xml:"Properties"`
 	Metadata   Metadata            `xml:"Metadata"`
-}
-
-// ContainerCreateResponse ...
-type ContainerCreateResponse struct {
-	rawResponse *http.Response
-}
-
-// Response returns the raw HTTP response object.
-func (ccr ContainerCreateResponse) Response() *http.Response {
-	return ccr.rawResponse
-}
-
-// StatusCode returns the HTTP status code of the response, e.g. 200.
-func (ccr ContainerCreateResponse) StatusCode() int {
-	return ccr.rawResponse.StatusCode
-}
-
-// Status returns the HTTP status message of the response, e.g. "200 OK".
-func (ccr ContainerCreateResponse) Status() string {
-	return ccr.rawResponse.Status
-}
-
-// Date returns the value for header Date.
-func (ccr ContainerCreateResponse) Date() time.Time {
-	s := ccr.rawResponse.Header.Get("Date")
-	if s == "" {
-		return time.Time{}
-	}
-	t, err := time.Parse(time.RFC1123, s)
-	if err != nil {
-		panic(err)
-	}
-	return t
-}
-
-// ETag returns the value for header ETag.
-func (ccr ContainerCreateResponse) ETag() ETag {
-	return ETag(ccr.rawResponse.Header.Get("ETag"))
-}
-
-// LastModified returns the value for header Last-Modified.
-func (ccr ContainerCreateResponse) LastModified() time.Time {
-	s := ccr.rawResponse.Header.Get("Last-Modified")
-	if s == "" {
-		return time.Time{}
-	}
-	t, err := time.Parse(time.RFC1123, s)
-	if err != nil {
-		panic(err)
-	}
-	return t
-}
-
-// RequestID returns the value for header x-ms-request-id.
-func (ccr ContainerCreateResponse) RequestID() string {
-	return ccr.rawResponse.Header.Get("x-ms-request-id")
-}
-
-// Version returns the value for header x-ms-version.
-func (ccr ContainerCreateResponse) Version() string {
-	return ccr.rawResponse.Header.Get("x-ms-version")
-}
-
-// ContainerDeleteResponse ...
-type ContainerDeleteResponse struct {
-	rawResponse *http.Response
-}
-
-// Response returns the raw HTTP response object.
-func (cdr ContainerDeleteResponse) Response() *http.Response {
-	return cdr.rawResponse
-}
-
-// StatusCode returns the HTTP status code of the response, e.g. 200.
-func (cdr ContainerDeleteResponse) StatusCode() int {
-	return cdr.rawResponse.StatusCode
-}
-
-// Status returns the HTTP status message of the response, e.g. "200 OK".
-func (cdr ContainerDeleteResponse) Status() string {
-	return cdr.rawResponse.Status
-}
-
-// Date returns the value for header Date.
-func (cdr ContainerDeleteResponse) Date() time.Time {
-	s := cdr.rawResponse.Header.Get("Date")
-	if s == "" {
-		return time.Time{}
-	}
-	t, err := time.Parse(time.RFC1123, s)
-	if err != nil {
-		panic(err)
-	}
-	return t
-}
-
-// RequestID returns the value for header x-ms-request-id.
-func (cdr ContainerDeleteResponse) RequestID() string {
-	return cdr.rawResponse.Header.Get("x-ms-request-id")
-}
-
-// Version returns the value for header x-ms-version.
-func (cdr ContainerDeleteResponse) Version() string {
-	return cdr.rawResponse.Header.Get("x-ms-version")
-}
-
-// ContainerGetMetadataResponse ...
-type ContainerGetMetadataResponse struct {
-	rawResponse *http.Response
-}
-
-// Response returns the raw HTTP response object.
-func (cgmr ContainerGetMetadataResponse) Response() *http.Response {
-	return cgmr.rawResponse
-}
-
-// StatusCode returns the HTTP status code of the response, e.g. 200.
-func (cgmr ContainerGetMetadataResponse) StatusCode() int {
-	return cgmr.rawResponse.StatusCode
-}
-
-// Status returns the HTTP status message of the response, e.g. "200 OK".
-func (cgmr ContainerGetMetadataResponse) Status() string {
-	return cgmr.rawResponse.Status
-}
-
-// Date returns the value for header Date.
-func (cgmr ContainerGetMetadataResponse) Date() time.Time {
-	s := cgmr.rawResponse.Header.Get("Date")
-	if s == "" {
-		return time.Time{}
-	}
-	t, err := time.Parse(time.RFC1123, s)
-	if err != nil {
-		panic(err)
-	}
-	return t
-}
-
-// ETag returns the value for header ETag.
-func (cgmr ContainerGetMetadataResponse) ETag() ETag {
-	return ETag(cgmr.rawResponse.Header.Get("ETag"))
-}
-
-// LastModified returns the value for header Last-Modified.
-func (cgmr ContainerGetMetadataResponse) LastModified() time.Time {
-	s := cgmr.rawResponse.Header.Get("Last-Modified")
-	if s == "" {
-		return time.Time{}
-	}
-	t, err := time.Parse(time.RFC1123, s)
-	if err != nil {
-		panic(err)
-	}
-	return t
-}
-
-// RequestID returns the value for header x-ms-request-id.
-func (cgmr ContainerGetMetadataResponse) RequestID() string {
-	return cgmr.rawResponse.Header.Get("x-ms-request-id")
-}
-
-// Version returns the value for header x-ms-version.
-func (cgmr ContainerGetMetadataResponse) Version() string {
-	return cgmr.rawResponse.Header.Get("x-ms-version")
-}
-
-// NewMetadata returns user-defined key/value pairs.
-func (cgmr ContainerGetMetadataResponse) NewMetadata() Metadata {
-	md := Metadata{}
-	for k, v := range cgmr.rawResponse.Header {
-		if len(k) > mdPrefixLen {
-			if prefix := k[0:mdPrefixLen]; strings.EqualFold(prefix, mdPrefix) {
-				md[strings.ToLower(k[mdPrefixLen:])] = v[0]
-			}
-		}
-	}
-	return md
-}
-
-// ContainerGetPropertiesResponse ...
-type ContainerGetPropertiesResponse struct {
-	rawResponse *http.Response
-}
-
-// Response returns the raw HTTP response object.
-func (cgpr ContainerGetPropertiesResponse) Response() *http.Response {
-	return cgpr.rawResponse
-}
-
-// StatusCode returns the HTTP status code of the response, e.g. 200.
-func (cgpr ContainerGetPropertiesResponse) StatusCode() int {
-	return cgpr.rawResponse.StatusCode
-}
-
-// Status returns the HTTP status message of the response, e.g. "200 OK".
-func (cgpr ContainerGetPropertiesResponse) Status() string {
-	return cgpr.rawResponse.Status
-}
-
-// BlobPublicAccess returns the value for header x-ms-blob-public-access.
-func (cgpr ContainerGetPropertiesResponse) BlobPublicAccess() PublicAccessType {
-	return PublicAccessType(cgpr.rawResponse.Header.Get("x-ms-blob-public-access"))
-}
-
-// Date returns the value for header Date.
-func (cgpr ContainerGetPropertiesResponse) Date() time.Time {
-	s := cgpr.rawResponse.Header.Get("Date")
-	if s == "" {
-		return time.Time{}
-	}
-	t, err := time.Parse(time.RFC1123, s)
-	if err != nil {
-		panic(err)
-	}
-	return t
-}
-
-// ETag returns the value for header ETag.
-func (cgpr ContainerGetPropertiesResponse) ETag() ETag {
-	return ETag(cgpr.rawResponse.Header.Get("ETag"))
-}
-
-// LastModified returns the value for header Last-Modified.
-func (cgpr ContainerGetPropertiesResponse) LastModified() time.Time {
-	s := cgpr.rawResponse.Header.Get("Last-Modified")
-	if s == "" {
-		return time.Time{}
-	}
-	t, err := time.Parse(time.RFC1123, s)
-	if err != nil {
-		panic(err)
-	}
-	return t
-}
-
-// LeaseDuration returns the value for header x-ms-lease-duration.
-func (cgpr ContainerGetPropertiesResponse) LeaseDuration() LeaseDurationType {
-	return LeaseDurationType(cgpr.rawResponse.Header.Get("x-ms-lease-duration"))
-}
-
-// LeaseState returns the value for header x-ms-lease-state.
-func (cgpr ContainerGetPropertiesResponse) LeaseState() LeaseStateType {
-	return LeaseStateType(cgpr.rawResponse.Header.Get("x-ms-lease-state"))
-}
-
-// LeaseStatus returns the value for header x-ms-lease-status.
-func (cgpr ContainerGetPropertiesResponse) LeaseStatus() LeaseStatusType {
-	return LeaseStatusType(cgpr.rawResponse.Header.Get("x-ms-lease-status"))
-}
-
-// RequestID returns the value for header x-ms-request-id.
-func (cgpr ContainerGetPropertiesResponse) RequestID() string {
-	return cgpr.rawResponse.Header.Get("x-ms-request-id")
-}
-
-// Version returns the value for header x-ms-version.
-func (cgpr ContainerGetPropertiesResponse) Version() string {
-	return cgpr.rawResponse.Header.Get("x-ms-version")
-}
-
-// NewMetadata returns user-defined key/value pairs.
-func (cgpr ContainerGetPropertiesResponse) NewMetadata() Metadata {
-	md := Metadata{}
-	for k, v := range cgpr.rawResponse.Header {
-		if len(k) > mdPrefixLen {
-			if prefix := k[0:mdPrefixLen]; strings.EqualFold(prefix, mdPrefix) {
-				md[strings.ToLower(k[mdPrefixLen:])] = v[0]
-			}
-		}
-	}
-	return md
-}
-
-// ContainerLeaseResponse ...
-type ContainerLeaseResponse struct {
-	rawResponse *http.Response
-}
-
-// Response returns the raw HTTP response object.
-func (clr ContainerLeaseResponse) Response() *http.Response {
-	return clr.rawResponse
-}
-
-// StatusCode returns the HTTP status code of the response, e.g. 200.
-func (clr ContainerLeaseResponse) StatusCode() int {
-	return clr.rawResponse.StatusCode
-}
-
-// Status returns the HTTP status message of the response, e.g. "200 OK".
-func (clr ContainerLeaseResponse) Status() string {
-	return clr.rawResponse.Status
-}
-
-// Date returns the value for header Date.
-func (clr ContainerLeaseResponse) Date() time.Time {
-	s := clr.rawResponse.Header.Get("Date")
-	if s == "" {
-		return time.Time{}
-	}
-	t, err := time.Parse(time.RFC1123, s)
-	if err != nil {
-		panic(err)
-	}
-	return t
-}
-
-// ETag returns the value for header ETag.
-func (clr ContainerLeaseResponse) ETag() ETag {
-	return ETag(clr.rawResponse.Header.Get("ETag"))
-}
-
-// LastModified returns the value for header Last-Modified.
-func (clr ContainerLeaseResponse) LastModified() time.Time {
-	s := clr.rawResponse.Header.Get("Last-Modified")
-	if s == "" {
-		return time.Time{}
-	}
-	t, err := time.Parse(time.RFC1123, s)
-	if err != nil {
-		panic(err)
-	}
-	return t
-}
-
-// LeaseID returns the value for header x-ms-lease-id.
-func (clr ContainerLeaseResponse) LeaseID() string {
-	return clr.rawResponse.Header.Get("x-ms-lease-id")
-}
-
-// LeaseTime returns the value for header x-ms-lease-time.
-func (clr ContainerLeaseResponse) LeaseTime() int32 {
-	s := clr.rawResponse.Header.Get("x-ms-lease-time")
-	if s == "" {
-		return -1
-	}
-	i, err := strconv.ParseInt(s, 10, 32)
-	if err != nil {
-		panic(err)
-	}
-	return int32(i)
-}
-
-// RequestID returns the value for header x-ms-request-id.
-func (clr ContainerLeaseResponse) RequestID() string {
-	return clr.rawResponse.Header.Get("x-ms-request-id")
-}
-
-// Version returns the value for header x-ms-version.
-func (clr ContainerLeaseResponse) Version() string {
-	return clr.rawResponse.Header.Get("x-ms-version")
 }
 
 // ContainerProperties - Properties of a container
@@ -1910,29 +1864,29 @@ type ContainerProperties struct {
 	PublicAccess PublicAccessType `xml:"PublicAccess"`
 }
 
-// ContainerSetACLResponse ...
-type ContainerSetACLResponse struct {
+// ContainersAcquireLeaseResponse ...
+type ContainersAcquireLeaseResponse struct {
 	rawResponse *http.Response
 }
 
 // Response returns the raw HTTP response object.
-func (csar ContainerSetACLResponse) Response() *http.Response {
-	return csar.rawResponse
+func (calr ContainersAcquireLeaseResponse) Response() *http.Response {
+	return calr.rawResponse
 }
 
 // StatusCode returns the HTTP status code of the response, e.g. 200.
-func (csar ContainerSetACLResponse) StatusCode() int {
-	return csar.rawResponse.StatusCode
+func (calr ContainersAcquireLeaseResponse) StatusCode() int {
+	return calr.rawResponse.StatusCode
 }
 
 // Status returns the HTTP status message of the response, e.g. "200 OK".
-func (csar ContainerSetACLResponse) Status() string {
-	return csar.rawResponse.Status
+func (calr ContainersAcquireLeaseResponse) Status() string {
+	return calr.rawResponse.Status
 }
 
 // Date returns the value for header Date.
-func (csar ContainerSetACLResponse) Date() time.Time {
-	s := csar.rawResponse.Header.Get("Date")
+func (calr ContainersAcquireLeaseResponse) Date() time.Time {
+	s := calr.rawResponse.Header.Get("Date")
 	if s == "" {
 		return time.Time{}
 	}
@@ -1944,13 +1898,219 @@ func (csar ContainerSetACLResponse) Date() time.Time {
 }
 
 // ETag returns the value for header ETag.
-func (csar ContainerSetACLResponse) ETag() ETag {
-	return ETag(csar.rawResponse.Header.Get("ETag"))
+func (calr ContainersAcquireLeaseResponse) ETag() ETag {
+	return ETag(calr.rawResponse.Header.Get("ETag"))
 }
 
 // LastModified returns the value for header Last-Modified.
-func (csar ContainerSetACLResponse) LastModified() time.Time {
-	s := csar.rawResponse.Header.Get("Last-Modified")
+func (calr ContainersAcquireLeaseResponse) LastModified() time.Time {
+	s := calr.rawResponse.Header.Get("Last-Modified")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// LeaseID returns the value for header x-ms-lease-id.
+func (calr ContainersAcquireLeaseResponse) LeaseID() string {
+	return calr.rawResponse.Header.Get("x-ms-lease-id")
+}
+
+// RequestID returns the value for header x-ms-request-id.
+func (calr ContainersAcquireLeaseResponse) RequestID() string {
+	return calr.rawResponse.Header.Get("x-ms-request-id")
+}
+
+// Version returns the value for header x-ms-version.
+func (calr ContainersAcquireLeaseResponse) Version() string {
+	return calr.rawResponse.Header.Get("x-ms-version")
+}
+
+// ContainersBreakLeaseResponse ...
+type ContainersBreakLeaseResponse struct {
+	rawResponse *http.Response
+}
+
+// Response returns the raw HTTP response object.
+func (cblr ContainersBreakLeaseResponse) Response() *http.Response {
+	return cblr.rawResponse
+}
+
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (cblr ContainersBreakLeaseResponse) StatusCode() int {
+	return cblr.rawResponse.StatusCode
+}
+
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (cblr ContainersBreakLeaseResponse) Status() string {
+	return cblr.rawResponse.Status
+}
+
+// Date returns the value for header Date.
+func (cblr ContainersBreakLeaseResponse) Date() time.Time {
+	s := cblr.rawResponse.Header.Get("Date")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// ETag returns the value for header ETag.
+func (cblr ContainersBreakLeaseResponse) ETag() ETag {
+	return ETag(cblr.rawResponse.Header.Get("ETag"))
+}
+
+// LastModified returns the value for header Last-Modified.
+func (cblr ContainersBreakLeaseResponse) LastModified() time.Time {
+	s := cblr.rawResponse.Header.Get("Last-Modified")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// LeaseTime returns the value for header x-ms-lease-time.
+func (cblr ContainersBreakLeaseResponse) LeaseTime() int32 {
+	s := cblr.rawResponse.Header.Get("x-ms-lease-time")
+	if s == "" {
+		return -1
+	}
+	i, err := strconv.ParseInt(s, 10, 32)
+	if err != nil {
+		panic(err)
+	}
+	return int32(i)
+}
+
+// RequestID returns the value for header x-ms-request-id.
+func (cblr ContainersBreakLeaseResponse) RequestID() string {
+	return cblr.rawResponse.Header.Get("x-ms-request-id")
+}
+
+// Version returns the value for header x-ms-version.
+func (cblr ContainersBreakLeaseResponse) Version() string {
+	return cblr.rawResponse.Header.Get("x-ms-version")
+}
+
+// ContainersChangeLeaseResponse ...
+type ContainersChangeLeaseResponse struct {
+	rawResponse *http.Response
+}
+
+// Response returns the raw HTTP response object.
+func (cclr ContainersChangeLeaseResponse) Response() *http.Response {
+	return cclr.rawResponse
+}
+
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (cclr ContainersChangeLeaseResponse) StatusCode() int {
+	return cclr.rawResponse.StatusCode
+}
+
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (cclr ContainersChangeLeaseResponse) Status() string {
+	return cclr.rawResponse.Status
+}
+
+// Date returns the value for header Date.
+func (cclr ContainersChangeLeaseResponse) Date() time.Time {
+	s := cclr.rawResponse.Header.Get("Date")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// ETag returns the value for header ETag.
+func (cclr ContainersChangeLeaseResponse) ETag() ETag {
+	return ETag(cclr.rawResponse.Header.Get("ETag"))
+}
+
+// LastModified returns the value for header Last-Modified.
+func (cclr ContainersChangeLeaseResponse) LastModified() time.Time {
+	s := cclr.rawResponse.Header.Get("Last-Modified")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// LeaseID returns the value for header x-ms-lease-id.
+func (cclr ContainersChangeLeaseResponse) LeaseID() string {
+	return cclr.rawResponse.Header.Get("x-ms-lease-id")
+}
+
+// RequestID returns the value for header x-ms-request-id.
+func (cclr ContainersChangeLeaseResponse) RequestID() string {
+	return cclr.rawResponse.Header.Get("x-ms-request-id")
+}
+
+// Version returns the value for header x-ms-version.
+func (cclr ContainersChangeLeaseResponse) Version() string {
+	return cclr.rawResponse.Header.Get("x-ms-version")
+}
+
+// ContainersCreateResponse ...
+type ContainersCreateResponse struct {
+	rawResponse *http.Response
+}
+
+// Response returns the raw HTTP response object.
+func (ccr ContainersCreateResponse) Response() *http.Response {
+	return ccr.rawResponse
+}
+
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (ccr ContainersCreateResponse) StatusCode() int {
+	return ccr.rawResponse.StatusCode
+}
+
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (ccr ContainersCreateResponse) Status() string {
+	return ccr.rawResponse.Status
+}
+
+// Date returns the value for header Date.
+func (ccr ContainersCreateResponse) Date() time.Time {
+	s := ccr.rawResponse.Header.Get("Date")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// ETag returns the value for header ETag.
+func (ccr ContainersCreateResponse) ETag() ETag {
+	return ETag(ccr.rawResponse.Header.Get("ETag"))
+}
+
+// LastModified returns the value for header Last-Modified.
+func (ccr ContainersCreateResponse) LastModified() time.Time {
+	s := ccr.rawResponse.Header.Get("Last-Modified")
 	if s == "" {
 		return time.Time{}
 	}
@@ -1962,37 +2122,362 @@ func (csar ContainerSetACLResponse) LastModified() time.Time {
 }
 
 // RequestID returns the value for header x-ms-request-id.
-func (csar ContainerSetACLResponse) RequestID() string {
-	return csar.rawResponse.Header.Get("x-ms-request-id")
+func (ccr ContainersCreateResponse) RequestID() string {
+	return ccr.rawResponse.Header.Get("x-ms-request-id")
 }
 
 // Version returns the value for header x-ms-version.
-func (csar ContainerSetACLResponse) Version() string {
-	return csar.rawResponse.Header.Get("x-ms-version")
+func (ccr ContainersCreateResponse) Version() string {
+	return ccr.rawResponse.Header.Get("x-ms-version")
 }
 
-// ContainerSetMetadataResponse ...
-type ContainerSetMetadataResponse struct {
+// ContainersDeleteResponse ...
+type ContainersDeleteResponse struct {
 	rawResponse *http.Response
 }
 
 // Response returns the raw HTTP response object.
-func (csmr ContainerSetMetadataResponse) Response() *http.Response {
+func (cdr ContainersDeleteResponse) Response() *http.Response {
+	return cdr.rawResponse
+}
+
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (cdr ContainersDeleteResponse) StatusCode() int {
+	return cdr.rawResponse.StatusCode
+}
+
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (cdr ContainersDeleteResponse) Status() string {
+	return cdr.rawResponse.Status
+}
+
+// Date returns the value for header Date.
+func (cdr ContainersDeleteResponse) Date() time.Time {
+	s := cdr.rawResponse.Header.Get("Date")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// RequestID returns the value for header x-ms-request-id.
+func (cdr ContainersDeleteResponse) RequestID() string {
+	return cdr.rawResponse.Header.Get("x-ms-request-id")
+}
+
+// Version returns the value for header x-ms-version.
+func (cdr ContainersDeleteResponse) Version() string {
+	return cdr.rawResponse.Header.Get("x-ms-version")
+}
+
+// ContainersGetPropertiesResponse ...
+type ContainersGetPropertiesResponse struct {
+	rawResponse *http.Response
+}
+
+// Response returns the raw HTTP response object.
+func (cgpr ContainersGetPropertiesResponse) Response() *http.Response {
+	return cgpr.rawResponse
+}
+
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (cgpr ContainersGetPropertiesResponse) StatusCode() int {
+	return cgpr.rawResponse.StatusCode
+}
+
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (cgpr ContainersGetPropertiesResponse) Status() string {
+	return cgpr.rawResponse.Status
+}
+
+// BlobPublicAccess returns the value for header x-ms-blob-public-access.
+func (cgpr ContainersGetPropertiesResponse) BlobPublicAccess() PublicAccessType {
+	return PublicAccessType(cgpr.rawResponse.Header.Get("x-ms-blob-public-access"))
+}
+
+// Date returns the value for header Date.
+func (cgpr ContainersGetPropertiesResponse) Date() time.Time {
+	s := cgpr.rawResponse.Header.Get("Date")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// ETag returns the value for header ETag.
+func (cgpr ContainersGetPropertiesResponse) ETag() ETag {
+	return ETag(cgpr.rawResponse.Header.Get("ETag"))
+}
+
+// LastModified returns the value for header Last-Modified.
+func (cgpr ContainersGetPropertiesResponse) LastModified() time.Time {
+	s := cgpr.rawResponse.Header.Get("Last-Modified")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// LeaseDuration returns the value for header x-ms-lease-duration.
+func (cgpr ContainersGetPropertiesResponse) LeaseDuration() LeaseDurationType {
+	return LeaseDurationType(cgpr.rawResponse.Header.Get("x-ms-lease-duration"))
+}
+
+// LeaseState returns the value for header x-ms-lease-state.
+func (cgpr ContainersGetPropertiesResponse) LeaseState() LeaseStateType {
+	return LeaseStateType(cgpr.rawResponse.Header.Get("x-ms-lease-state"))
+}
+
+// LeaseStatus returns the value for header x-ms-lease-status.
+func (cgpr ContainersGetPropertiesResponse) LeaseStatus() LeaseStatusType {
+	return LeaseStatusType(cgpr.rawResponse.Header.Get("x-ms-lease-status"))
+}
+
+// RequestID returns the value for header x-ms-request-id.
+func (cgpr ContainersGetPropertiesResponse) RequestID() string {
+	return cgpr.rawResponse.Header.Get("x-ms-request-id")
+}
+
+// Version returns the value for header x-ms-version.
+func (cgpr ContainersGetPropertiesResponse) Version() string {
+	return cgpr.rawResponse.Header.Get("x-ms-version")
+}
+
+// NewMetadata returns user-defined key/value pairs.
+func (cgpr ContainersGetPropertiesResponse) NewMetadata() Metadata {
+	md := Metadata{}
+	for k, v := range cgpr.rawResponse.Header {
+		if len(k) > mdPrefixLen {
+			if prefix := k[0:mdPrefixLen]; strings.EqualFold(prefix, mdPrefix) {
+				md[strings.ToLower(k[mdPrefixLen:])] = v[0]
+			}
+		}
+	}
+	return md
+}
+
+// ContainersReleaseLeaseResponse ...
+type ContainersReleaseLeaseResponse struct {
+	rawResponse *http.Response
+}
+
+// Response returns the raw HTTP response object.
+func (crlr ContainersReleaseLeaseResponse) Response() *http.Response {
+	return crlr.rawResponse
+}
+
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (crlr ContainersReleaseLeaseResponse) StatusCode() int {
+	return crlr.rawResponse.StatusCode
+}
+
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (crlr ContainersReleaseLeaseResponse) Status() string {
+	return crlr.rawResponse.Status
+}
+
+// Date returns the value for header Date.
+func (crlr ContainersReleaseLeaseResponse) Date() time.Time {
+	s := crlr.rawResponse.Header.Get("Date")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// ETag returns the value for header ETag.
+func (crlr ContainersReleaseLeaseResponse) ETag() ETag {
+	return ETag(crlr.rawResponse.Header.Get("ETag"))
+}
+
+// LastModified returns the value for header Last-Modified.
+func (crlr ContainersReleaseLeaseResponse) LastModified() time.Time {
+	s := crlr.rawResponse.Header.Get("Last-Modified")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// RequestID returns the value for header x-ms-request-id.
+func (crlr ContainersReleaseLeaseResponse) RequestID() string {
+	return crlr.rawResponse.Header.Get("x-ms-request-id")
+}
+
+// Version returns the value for header x-ms-version.
+func (crlr ContainersReleaseLeaseResponse) Version() string {
+	return crlr.rawResponse.Header.Get("x-ms-version")
+}
+
+// ContainersRenewLeaseResponse ...
+type ContainersRenewLeaseResponse struct {
+	rawResponse *http.Response
+}
+
+// Response returns the raw HTTP response object.
+func (crlr ContainersRenewLeaseResponse) Response() *http.Response {
+	return crlr.rawResponse
+}
+
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (crlr ContainersRenewLeaseResponse) StatusCode() int {
+	return crlr.rawResponse.StatusCode
+}
+
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (crlr ContainersRenewLeaseResponse) Status() string {
+	return crlr.rawResponse.Status
+}
+
+// Date returns the value for header Date.
+func (crlr ContainersRenewLeaseResponse) Date() time.Time {
+	s := crlr.rawResponse.Header.Get("Date")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// ETag returns the value for header ETag.
+func (crlr ContainersRenewLeaseResponse) ETag() ETag {
+	return ETag(crlr.rawResponse.Header.Get("ETag"))
+}
+
+// LastModified returns the value for header Last-Modified.
+func (crlr ContainersRenewLeaseResponse) LastModified() time.Time {
+	s := crlr.rawResponse.Header.Get("Last-Modified")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// LeaseID returns the value for header x-ms-lease-id.
+func (crlr ContainersRenewLeaseResponse) LeaseID() string {
+	return crlr.rawResponse.Header.Get("x-ms-lease-id")
+}
+
+// RequestID returns the value for header x-ms-request-id.
+func (crlr ContainersRenewLeaseResponse) RequestID() string {
+	return crlr.rawResponse.Header.Get("x-ms-request-id")
+}
+
+// Version returns the value for header x-ms-version.
+func (crlr ContainersRenewLeaseResponse) Version() string {
+	return crlr.rawResponse.Header.Get("x-ms-version")
+}
+
+// ContainersSetAccessPolicyResponse ...
+type ContainersSetAccessPolicyResponse struct {
+	rawResponse *http.Response
+}
+
+// Response returns the raw HTTP response object.
+func (csapr ContainersSetAccessPolicyResponse) Response() *http.Response {
+	return csapr.rawResponse
+}
+
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (csapr ContainersSetAccessPolicyResponse) StatusCode() int {
+	return csapr.rawResponse.StatusCode
+}
+
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (csapr ContainersSetAccessPolicyResponse) Status() string {
+	return csapr.rawResponse.Status
+}
+
+// Date returns the value for header Date.
+func (csapr ContainersSetAccessPolicyResponse) Date() time.Time {
+	s := csapr.rawResponse.Header.Get("Date")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// ETag returns the value for header ETag.
+func (csapr ContainersSetAccessPolicyResponse) ETag() ETag {
+	return ETag(csapr.rawResponse.Header.Get("ETag"))
+}
+
+// LastModified returns the value for header Last-Modified.
+func (csapr ContainersSetAccessPolicyResponse) LastModified() time.Time {
+	s := csapr.rawResponse.Header.Get("Last-Modified")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// RequestID returns the value for header x-ms-request-id.
+func (csapr ContainersSetAccessPolicyResponse) RequestID() string {
+	return csapr.rawResponse.Header.Get("x-ms-request-id")
+}
+
+// Version returns the value for header x-ms-version.
+func (csapr ContainersSetAccessPolicyResponse) Version() string {
+	return csapr.rawResponse.Header.Get("x-ms-version")
+}
+
+// ContainersSetMetadataResponse ...
+type ContainersSetMetadataResponse struct {
+	rawResponse *http.Response
+}
+
+// Response returns the raw HTTP response object.
+func (csmr ContainersSetMetadataResponse) Response() *http.Response {
 	return csmr.rawResponse
 }
 
 // StatusCode returns the HTTP status code of the response, e.g. 200.
-func (csmr ContainerSetMetadataResponse) StatusCode() int {
+func (csmr ContainersSetMetadataResponse) StatusCode() int {
 	return csmr.rawResponse.StatusCode
 }
 
 // Status returns the HTTP status message of the response, e.g. "200 OK".
-func (csmr ContainerSetMetadataResponse) Status() string {
+func (csmr ContainersSetMetadataResponse) Status() string {
 	return csmr.rawResponse.Status
 }
 
 // Date returns the value for header Date.
-func (csmr ContainerSetMetadataResponse) Date() time.Time {
+func (csmr ContainersSetMetadataResponse) Date() time.Time {
 	s := csmr.rawResponse.Header.Get("Date")
 	if s == "" {
 		return time.Time{}
@@ -2005,12 +2490,12 @@ func (csmr ContainerSetMetadataResponse) Date() time.Time {
 }
 
 // ETag returns the value for header ETag.
-func (csmr ContainerSetMetadataResponse) ETag() ETag {
+func (csmr ContainersSetMetadataResponse) ETag() ETag {
 	return ETag(csmr.rawResponse.Header.Get("ETag"))
 }
 
 // LastModified returns the value for header Last-Modified.
-func (csmr ContainerSetMetadataResponse) LastModified() time.Time {
+func (csmr ContainersSetMetadataResponse) LastModified() time.Time {
 	s := csmr.rawResponse.Header.Get("Last-Modified")
 	if s == "" {
 		return time.Time{}
@@ -2023,12 +2508,12 @@ func (csmr ContainerSetMetadataResponse) LastModified() time.Time {
 }
 
 // RequestID returns the value for header x-ms-request-id.
-func (csmr ContainerSetMetadataResponse) RequestID() string {
+func (csmr ContainersSetMetadataResponse) RequestID() string {
 	return csmr.rawResponse.Header.Get("x-ms-request-id")
 }
 
 // Version returns the value for header x-ms-version.
-func (csmr ContainerSetMetadataResponse) Version() string {
+func (csmr ContainersSetMetadataResponse) Version() string {
 	return csmr.rawResponse.Header.Get("x-ms-version")
 }
 
@@ -2049,82 +2534,87 @@ type CorsRule struct {
 	MaxAgeInSeconds int32 `xml:"MaxAgeInSeconds"`
 }
 
-// GeoReplication ...
-type GeoReplication struct {
-	// Status - The status of the secondary location. Possible values include: 'Live', 'Bootstrap', 'Unavailable', 'None'
-	Status GeoReplicationStatusType `xml:"Status"`
-	// LastSyncTime - A GMT date/time value, to the second. All primary writes preceding this value are guaranteed to be available for read operations at the secondary. Primary writes after this point in time may or may not be available for reads.
-	LastSyncTime time.Time `xml:"LastSyncTime"`
-}
-
-// GetResponse ...
-type GetResponse struct {
+// DownloadResponse ...
+type DownloadResponse struct {
 	rawResponse *http.Response
 }
 
 // Response returns the raw HTTP response object.
-func (gr GetResponse) Response() *http.Response {
-	return gr.rawResponse
+func (dr DownloadResponse) Response() *http.Response {
+	return dr.rawResponse
 }
 
 // StatusCode returns the HTTP status code of the response, e.g. 200.
-func (gr GetResponse) StatusCode() int {
-	return gr.rawResponse.StatusCode
+func (dr DownloadResponse) StatusCode() int {
+	return dr.rawResponse.StatusCode
 }
 
 // Status returns the HTTP status message of the response, e.g. "200 OK".
-func (gr GetResponse) Status() string {
-	return gr.rawResponse.Status
+func (dr DownloadResponse) Status() string {
+	return dr.rawResponse.Status
 }
 
 // Body returns the raw HTTP response object's Body.
-func (gr GetResponse) Body() io.ReadCloser {
-	return gr.rawResponse.Body
+func (dr DownloadResponse) Body() io.ReadCloser {
+	return dr.rawResponse.Body
 }
 
 // AcceptRanges returns the value for header Accept-Ranges.
-func (gr GetResponse) AcceptRanges() string {
-	return gr.rawResponse.Header.Get("Accept-Ranges")
+func (dr DownloadResponse) AcceptRanges() string {
+	return dr.rawResponse.Header.Get("Accept-Ranges")
 }
 
 // BlobCommittedBlockCount returns the value for header x-ms-blob-committed-block-count.
-func (gr GetResponse) BlobCommittedBlockCount() string {
-	return gr.rawResponse.Header.Get("x-ms-blob-committed-block-count")
+func (dr DownloadResponse) BlobCommittedBlockCount() string {
+	return dr.rawResponse.Header.Get("x-ms-blob-committed-block-count")
+}
+
+// BlobContentMD5 returns the value for header x-ms-blob-content-md5.
+func (dr DownloadResponse) BlobContentMD5() []byte {
+	s := dr.rawResponse.Header.Get("x-ms-blob-content-md5")
+	if s == "" {
+		return nil
+	}
+	b, err := base64.StdEncoding.DecodeString(s)
+	if err != nil {
+		panic(err)
+	}
+	return b
 }
 
 // BlobSequenceNumber returns the value for header x-ms-blob-sequence-number.
-func (gr GetResponse) BlobSequenceNumber() string {
-	return gr.rawResponse.Header.Get("x-ms-blob-sequence-number")
+func (dr DownloadResponse) BlobSequenceNumber() string {
+	return dr.rawResponse.Header.Get("x-ms-blob-sequence-number")
 }
 
 // BlobType returns the value for header x-ms-blob-type.
-func (gr GetResponse) BlobType() BlobType {
-	return BlobType(gr.rawResponse.Header.Get("x-ms-blob-type"))
+func (dr DownloadResponse) BlobType() BlobType {
+	return BlobType(dr.rawResponse.Header.Get("x-ms-blob-type"))
 }
 
 // CacheControl returns the value for header Cache-Control.
-func (gr GetResponse) CacheControl() string {
-	return gr.rawResponse.Header.Get("Cache-Control")
+func (dr DownloadResponse) CacheControl() string {
+	return dr.rawResponse.Header.Get("Cache-Control")
 }
 
 // ContentDisposition returns the value for header Content-Disposition.
-func (gr GetResponse) ContentDisposition() string {
-	return gr.rawResponse.Header.Get("Content-Disposition")
+func (dr DownloadResponse) ContentDisposition() string {
+	return dr.rawResponse.Header.Get("Content-Disposition")
 }
 
 // ContentEncoding returns the value for header Content-Encoding.
-func (gr GetResponse) ContentEncoding() string {
-	return gr.rawResponse.Header.Get("Content-Encoding")
+func (dr DownloadResponse) ContentEncoding() string {
+	return dr.rawResponse.Header.Get("Content-Encoding")
 }
 
 // ContentLanguage returns the value for header Content-Language.
-func (gr GetResponse) ContentLanguage() string {
-	return gr.rawResponse.Header.Get("Content-Language")
+func (dr DownloadResponse) ContentLanguage() string {
+	return dr.rawResponse.Header.Get("Content-Language")
 }
 
 // ContentLength returns the value for header Content-Length.
-func (gr GetResponse) ContentLength() int64 {
-	s := gr.rawResponse.Header.Get("Content-Length")
+func (dr DownloadResponse) ContentLength() int64 {
+	s := dr.rawResponse.Header.Get("Content-Length")
 	if s == "" {
 		return -1
 	}
@@ -2135,19 +2625,32 @@ func (gr GetResponse) ContentLength() int64 {
 	return i
 }
 
+// ContentMD5 returns the value for header Content-MD5.
+func (dr DownloadResponse) ContentMD5() []byte {
+	s := dr.rawResponse.Header.Get("Content-MD5")
+	if s == "" {
+		return nil
+	}
+	b, err := base64.StdEncoding.DecodeString(s)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
 // ContentRange returns the value for header Content-Range.
-func (gr GetResponse) ContentRange() string {
-	return gr.rawResponse.Header.Get("Content-Range")
+func (dr DownloadResponse) ContentRange() string {
+	return dr.rawResponse.Header.Get("Content-Range")
 }
 
 // ContentType returns the value for header Content-Type.
-func (gr GetResponse) ContentType() string {
-	return gr.rawResponse.Header.Get("Content-Type")
+func (dr DownloadResponse) ContentType() string {
+	return dr.rawResponse.Header.Get("Content-Type")
 }
 
 // CopyCompletionTime returns the value for header x-ms-copy-completion-time.
-func (gr GetResponse) CopyCompletionTime() time.Time {
-	s := gr.rawResponse.Header.Get("x-ms-copy-completion-time")
+func (dr DownloadResponse) CopyCompletionTime() time.Time {
+	s := dr.rawResponse.Header.Get("x-ms-copy-completion-time")
 	if s == "" {
 		return time.Time{}
 	}
@@ -2159,33 +2662,33 @@ func (gr GetResponse) CopyCompletionTime() time.Time {
 }
 
 // CopyID returns the value for header x-ms-copy-id.
-func (gr GetResponse) CopyID() string {
-	return gr.rawResponse.Header.Get("x-ms-copy-id")
+func (dr DownloadResponse) CopyID() string {
+	return dr.rawResponse.Header.Get("x-ms-copy-id")
 }
 
 // CopyProgress returns the value for header x-ms-copy-progress.
-func (gr GetResponse) CopyProgress() string {
-	return gr.rawResponse.Header.Get("x-ms-copy-progress")
+func (dr DownloadResponse) CopyProgress() string {
+	return dr.rawResponse.Header.Get("x-ms-copy-progress")
 }
 
 // CopySource returns the value for header x-ms-copy-source.
-func (gr GetResponse) CopySource() string {
-	return gr.rawResponse.Header.Get("x-ms-copy-source")
+func (dr DownloadResponse) CopySource() string {
+	return dr.rawResponse.Header.Get("x-ms-copy-source")
 }
 
 // CopyStatus returns the value for header x-ms-copy-status.
-func (gr GetResponse) CopyStatus() CopyStatusType {
-	return CopyStatusType(gr.rawResponse.Header.Get("x-ms-copy-status"))
+func (dr DownloadResponse) CopyStatus() CopyStatusType {
+	return CopyStatusType(dr.rawResponse.Header.Get("x-ms-copy-status"))
 }
 
 // CopyStatusDescription returns the value for header x-ms-copy-status-description.
-func (gr GetResponse) CopyStatusDescription() string {
-	return gr.rawResponse.Header.Get("x-ms-copy-status-description")
+func (dr DownloadResponse) CopyStatusDescription() string {
+	return dr.rawResponse.Header.Get("x-ms-copy-status-description")
 }
 
 // Date returns the value for header Date.
-func (gr GetResponse) Date() time.Time {
-	s := gr.rawResponse.Header.Get("Date")
+func (dr DownloadResponse) Date() time.Time {
+	s := dr.rawResponse.Header.Get("Date")
 	if s == "" {
 		return time.Time{}
 	}
@@ -2197,18 +2700,18 @@ func (gr GetResponse) Date() time.Time {
 }
 
 // ETag returns the value for header ETag.
-func (gr GetResponse) ETag() ETag {
-	return ETag(gr.rawResponse.Header.Get("ETag"))
+func (dr DownloadResponse) ETag() ETag {
+	return ETag(dr.rawResponse.Header.Get("ETag"))
 }
 
 // IsServerEncrypted returns the value for header x-ms-server-encrypted.
-func (gr GetResponse) IsServerEncrypted() string {
-	return gr.rawResponse.Header.Get("x-ms-server-encrypted")
+func (dr DownloadResponse) IsServerEncrypted() string {
+	return dr.rawResponse.Header.Get("x-ms-server-encrypted")
 }
 
 // LastModified returns the value for header Last-Modified.
-func (gr GetResponse) LastModified() time.Time {
-	s := gr.rawResponse.Header.Get("Last-Modified")
+func (dr DownloadResponse) LastModified() time.Time {
+	s := dr.rawResponse.Header.Get("Last-Modified")
 	if s == "" {
 		return time.Time{}
 	}
@@ -2220,34 +2723,34 @@ func (gr GetResponse) LastModified() time.Time {
 }
 
 // LeaseDuration returns the value for header x-ms-lease-duration.
-func (gr GetResponse) LeaseDuration() LeaseDurationType {
-	return LeaseDurationType(gr.rawResponse.Header.Get("x-ms-lease-duration"))
+func (dr DownloadResponse) LeaseDuration() LeaseDurationType {
+	return LeaseDurationType(dr.rawResponse.Header.Get("x-ms-lease-duration"))
 }
 
 // LeaseState returns the value for header x-ms-lease-state.
-func (gr GetResponse) LeaseState() LeaseStateType {
-	return LeaseStateType(gr.rawResponse.Header.Get("x-ms-lease-state"))
+func (dr DownloadResponse) LeaseState() LeaseStateType {
+	return LeaseStateType(dr.rawResponse.Header.Get("x-ms-lease-state"))
 }
 
 // LeaseStatus returns the value for header x-ms-lease-status.
-func (gr GetResponse) LeaseStatus() LeaseStatusType {
-	return LeaseStatusType(gr.rawResponse.Header.Get("x-ms-lease-status"))
+func (dr DownloadResponse) LeaseStatus() LeaseStatusType {
+	return LeaseStatusType(dr.rawResponse.Header.Get("x-ms-lease-status"))
 }
 
 // RequestID returns the value for header x-ms-request-id.
-func (gr GetResponse) RequestID() string {
-	return gr.rawResponse.Header.Get("x-ms-request-id")
+func (dr DownloadResponse) RequestID() string {
+	return dr.rawResponse.Header.Get("x-ms-request-id")
 }
 
 // Version returns the value for header x-ms-version.
-func (gr GetResponse) Version() string {
-	return gr.rawResponse.Header.Get("x-ms-version")
+func (dr DownloadResponse) Version() string {
+	return dr.rawResponse.Header.Get("x-ms-version")
 }
 
 // NewMetadata returns user-defined key/value pairs.
-func (gr GetResponse) NewMetadata() Metadata {
+func (dr DownloadResponse) NewMetadata() Metadata {
 	md := Metadata{}
-	for k, v := range gr.rawResponse.Header {
+	for k, v := range dr.rawResponse.Header {
 		if len(k) > mdPrefixLen {
 			if prefix := k[0:mdPrefixLen]; strings.EqualFold(prefix, mdPrefix) {
 				md[strings.ToLower(k[mdPrefixLen:])] = v[0]
@@ -2255,6 +2758,14 @@ func (gr GetResponse) NewMetadata() Metadata {
 		}
 	}
 	return md
+}
+
+// GeoReplication ...
+type GeoReplication struct {
+	// Status - The status of the secondary location. Possible values include: 'Live', 'Bootstrap', 'Unavailable', 'None'
+	Status GeoReplicationStatusType `xml:"Status"`
+	// LastSyncTime - A GMT date/time value, to the second. All primary writes preceding this value are guaranteed to be available for read operations at the secondary. Primary writes after this point in time may or may not be available for reads.
+	LastSyncTime time.Time `xml:"LastSyncTime"`
 }
 
 // ListBlobsResponse - An enumeration of blobs
@@ -2268,7 +2779,7 @@ type ListBlobsResponse struct {
 	Marker          string   `xml:"Marker"`
 	MaxResults      int32    `xml:"MaxResults"`
 	Delimiter       string   `xml:"Delimiter"`
-	Blobs           Blobs    `xml:"Blobs"`
+	Blobs           BlobList `xml:"Blobs"`
 	NextMarker      Marker   `xml:"NextMarker"`
 }
 
@@ -2292,6 +2803,24 @@ func (lbr ListBlobsResponse) ContentType() string {
 	return lbr.rawResponse.Header.Get("Content-Type")
 }
 
+// ContentType returns the value for header Content-Type.
+func (lbr ListBlobsResponse) ContentType() string {
+	return lbr.rawResponse.Header.Get("Content-Type")
+}
+
+// Date returns the value for header Date.
+func (lbr ListBlobsResponse) Date() time.Time {
+	s := lbr.rawResponse.Header.Get("Date")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
 // Date returns the value for header Date.
 func (lbr ListBlobsResponse) Date() time.Time {
 	s := lbr.rawResponse.Header.Get("Date")
@@ -2308,6 +2837,16 @@ func (lbr ListBlobsResponse) Date() time.Time {
 // RequestID returns the value for header x-ms-request-id.
 func (lbr ListBlobsResponse) RequestID() string {
 	return lbr.rawResponse.Header.Get("x-ms-request-id")
+}
+
+// RequestID returns the value for header x-ms-request-id.
+func (lbr ListBlobsResponse) RequestID() string {
+	return lbr.rawResponse.Header.Get("x-ms-request-id")
+}
+
+// Version returns the value for header x-ms-version.
+func (lbr ListBlobsResponse) Version() string {
+	return lbr.rawResponse.Header.Get("x-ms-version")
 }
 
 // Version returns the value for header x-ms-version.
@@ -2369,47 +2908,42 @@ type Logging struct {
 // Metrics ...
 type Metrics struct {
 	// Version - The version of Storage Analytics to configure.
-	Version string `xml:"Version"`
+	Version *string `xml:"Version"`
 	// Enabled - Indicates whether metrics are enabled for the Blob service.
 	Enabled bool `xml:"Enabled"`
 	// IncludeAPIs - Indicates whether metrics should generate summary statistics for called API operations.
-	IncludeAPIs     bool            `xml:"IncludeAPIs"`
-	RetentionPolicy RetentionPolicy `xml:"RetentionPolicy"`
+	IncludeAPIs     *bool            `xml:"IncludeAPIs"`
+	RetentionPolicy *RetentionPolicy `xml:"RetentionPolicy"`
 }
 
-// PageBlobsIncrementalCopyResponse ...
-type PageBlobsIncrementalCopyResponse struct {
+// PageBlobResizeResponse ...
+type PageBlobResizeResponse struct {
 	rawResponse *http.Response
 }
 
 // Response returns the raw HTTP response object.
-func (pbicr PageBlobsIncrementalCopyResponse) Response() *http.Response {
-	return pbicr.rawResponse
+func (pbrr PageBlobResizeResponse) Response() *http.Response {
+	return pbrr.rawResponse
 }
 
 // StatusCode returns the HTTP status code of the response, e.g. 200.
-func (pbicr PageBlobsIncrementalCopyResponse) StatusCode() int {
-	return pbicr.rawResponse.StatusCode
+func (pbrr PageBlobResizeResponse) StatusCode() int {
+	return pbrr.rawResponse.StatusCode
 }
 
 // Status returns the HTTP status message of the response, e.g. "200 OK".
-func (pbicr PageBlobsIncrementalCopyResponse) Status() string {
-	return pbicr.rawResponse.Status
+func (pbrr PageBlobResizeResponse) Status() string {
+	return pbrr.rawResponse.Status
 }
 
-// CopyID returns the value for header x-ms-copy-id.
-func (pbicr PageBlobsIncrementalCopyResponse) CopyID() string {
-	return pbicr.rawResponse.Header.Get("x-ms-copy-id")
-}
-
-// CopyStatus returns the value for header x-ms-copy-status.
-func (pbicr PageBlobsIncrementalCopyResponse) CopyStatus() CopyStatusType {
-	return CopyStatusType(pbicr.rawResponse.Header.Get("x-ms-copy-status"))
+// BlobSequenceNumber returns the value for header x-ms-blob-sequence-number.
+func (pbrr PageBlobResizeResponse) BlobSequenceNumber() string {
+	return pbrr.rawResponse.Header.Get("x-ms-blob-sequence-number")
 }
 
 // Date returns the value for header Date.
-func (pbicr PageBlobsIncrementalCopyResponse) Date() time.Time {
-	s := pbicr.rawResponse.Header.Get("Date")
+func (pbrr PageBlobResizeResponse) Date() time.Time {
+	s := pbrr.rawResponse.Header.Get("Date")
 	if s == "" {
 		return time.Time{}
 	}
@@ -2421,13 +2955,13 @@ func (pbicr PageBlobsIncrementalCopyResponse) Date() time.Time {
 }
 
 // ETag returns the value for header ETag.
-func (pbicr PageBlobsIncrementalCopyResponse) ETag() ETag {
-	return ETag(pbicr.rawResponse.Header.Get("ETag"))
+func (pbrr PageBlobResizeResponse) ETag() ETag {
+	return ETag(pbrr.rawResponse.Header.Get("ETag"))
 }
 
 // LastModified returns the value for header Last-Modified.
-func (pbicr PageBlobsIncrementalCopyResponse) LastModified() time.Time {
-	s := pbicr.rawResponse.Header.Get("Last-Modified")
+func (pbrr PageBlobResizeResponse) LastModified() time.Time {
+	s := pbrr.rawResponse.Header.Get("Last-Modified")
 	if s == "" {
 		return time.Time{}
 	}
@@ -2439,38 +2973,38 @@ func (pbicr PageBlobsIncrementalCopyResponse) LastModified() time.Time {
 }
 
 // RequestID returns the value for header x-ms-request-id.
-func (pbicr PageBlobsIncrementalCopyResponse) RequestID() string {
-	return pbicr.rawResponse.Header.Get("x-ms-request-id")
+func (pbrr PageBlobResizeResponse) RequestID() string {
+	return pbrr.rawResponse.Header.Get("x-ms-request-id")
 }
 
 // Version returns the value for header x-ms-version.
-func (pbicr PageBlobsIncrementalCopyResponse) Version() string {
-	return pbicr.rawResponse.Header.Get("x-ms-version")
+func (pbrr PageBlobResizeResponse) Version() string {
+	return pbrr.rawResponse.Header.Get("x-ms-version")
 }
 
-// PageBlobsPutPageResponse ...
-type PageBlobsPutPageResponse struct {
+// PageBlobsClearPagesResponse ...
+type PageBlobsClearPagesResponse struct {
 	rawResponse *http.Response
 }
 
 // Response returns the raw HTTP response object.
-func (pbppr PageBlobsPutPageResponse) Response() *http.Response {
-	return pbppr.rawResponse
+func (pbcpr PageBlobsClearPagesResponse) Response() *http.Response {
+	return pbcpr.rawResponse
 }
 
 // StatusCode returns the HTTP status code of the response, e.g. 200.
-func (pbppr PageBlobsPutPageResponse) StatusCode() int {
-	return pbppr.rawResponse.StatusCode
+func (pbcpr PageBlobsClearPagesResponse) StatusCode() int {
+	return pbcpr.rawResponse.StatusCode
 }
 
 // Status returns the HTTP status message of the response, e.g. "200 OK".
-func (pbppr PageBlobsPutPageResponse) Status() string {
-	return pbppr.rawResponse.Status
+func (pbcpr PageBlobsClearPagesResponse) Status() string {
+	return pbcpr.rawResponse.Status
 }
 
 // BlobSequenceNumber returns the value for header x-ms-blob-sequence-number.
-func (pbppr PageBlobsPutPageResponse) BlobSequenceNumber() int32 {
-	s := pbppr.rawResponse.Header.Get("x-ms-blob-sequence-number")
+func (pbcpr PageBlobsClearPagesResponse) BlobSequenceNumber() int32 {
+	s := pbcpr.rawResponse.Header.Get("x-ms-blob-sequence-number")
 	if s == "" {
 		return -1
 	}
@@ -2481,9 +3015,22 @@ func (pbppr PageBlobsPutPageResponse) BlobSequenceNumber() int32 {
 	return int32(i)
 }
 
+// ContentMD5 returns the value for header Content-MD5.
+func (pbcpr PageBlobsClearPagesResponse) ContentMD5() []byte {
+	s := pbcpr.rawResponse.Header.Get("Content-MD5")
+	if s == "" {
+		return nil
+	}
+	b, err := base64.StdEncoding.DecodeString(s)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
 // Date returns the value for header Date.
-func (pbppr PageBlobsPutPageResponse) Date() time.Time {
-	s := pbppr.rawResponse.Header.Get("Date")
+func (pbcpr PageBlobsClearPagesResponse) Date() time.Time {
+	s := pbcpr.rawResponse.Header.Get("Date")
 	if s == "" {
 		return time.Time{}
 	}
@@ -2495,18 +3042,18 @@ func (pbppr PageBlobsPutPageResponse) Date() time.Time {
 }
 
 // ETag returns the value for header ETag.
-func (pbppr PageBlobsPutPageResponse) ETag() ETag {
-	return ETag(pbppr.rawResponse.Header.Get("ETag"))
+func (pbcpr PageBlobsClearPagesResponse) ETag() ETag {
+	return ETag(pbcpr.rawResponse.Header.Get("ETag"))
 }
 
 // IsServerEncrypted returns the value for header x-ms-request-server-encrypted.
-func (pbppr PageBlobsPutPageResponse) IsServerEncrypted() string {
-	return pbppr.rawResponse.Header.Get("x-ms-request-server-encrypted")
+func (pbcpr PageBlobsClearPagesResponse) IsServerEncrypted() string {
+	return pbcpr.rawResponse.Header.Get("x-ms-request-server-encrypted")
 }
 
 // LastModified returns the value for header Last-Modified.
-func (pbppr PageBlobsPutPageResponse) LastModified() time.Time {
-	s := pbppr.rawResponse.Header.Get("Last-Modified")
+func (pbcpr PageBlobsClearPagesResponse) LastModified() time.Time {
+	s := pbcpr.rawResponse.Header.Get("Last-Modified")
 	if s == "" {
 		return time.Time{}
 	}
@@ -2518,13 +3065,321 @@ func (pbppr PageBlobsPutPageResponse) LastModified() time.Time {
 }
 
 // RequestID returns the value for header x-ms-request-id.
-func (pbppr PageBlobsPutPageResponse) RequestID() string {
-	return pbppr.rawResponse.Header.Get("x-ms-request-id")
+func (pbcpr PageBlobsClearPagesResponse) RequestID() string {
+	return pbcpr.rawResponse.Header.Get("x-ms-request-id")
 }
 
 // Version returns the value for header x-ms-version.
-func (pbppr PageBlobsPutPageResponse) Version() string {
-	return pbppr.rawResponse.Header.Get("x-ms-version")
+func (pbcpr PageBlobsClearPagesResponse) Version() string {
+	return pbcpr.rawResponse.Header.Get("x-ms-version")
+}
+
+// PageBlobsCopyIncrementalResponse ...
+type PageBlobsCopyIncrementalResponse struct {
+	rawResponse *http.Response
+}
+
+// Response returns the raw HTTP response object.
+func (pbcir PageBlobsCopyIncrementalResponse) Response() *http.Response {
+	return pbcir.rawResponse
+}
+
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (pbcir PageBlobsCopyIncrementalResponse) StatusCode() int {
+	return pbcir.rawResponse.StatusCode
+}
+
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (pbcir PageBlobsCopyIncrementalResponse) Status() string {
+	return pbcir.rawResponse.Status
+}
+
+// CopyID returns the value for header x-ms-copy-id.
+func (pbcir PageBlobsCopyIncrementalResponse) CopyID() string {
+	return pbcir.rawResponse.Header.Get("x-ms-copy-id")
+}
+
+// CopyStatus returns the value for header x-ms-copy-status.
+func (pbcir PageBlobsCopyIncrementalResponse) CopyStatus() CopyStatusType {
+	return CopyStatusType(pbcir.rawResponse.Header.Get("x-ms-copy-status"))
+}
+
+// Date returns the value for header Date.
+func (pbcir PageBlobsCopyIncrementalResponse) Date() time.Time {
+	s := pbcir.rawResponse.Header.Get("Date")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// ETag returns the value for header ETag.
+func (pbcir PageBlobsCopyIncrementalResponse) ETag() ETag {
+	return ETag(pbcir.rawResponse.Header.Get("ETag"))
+}
+
+// LastModified returns the value for header Last-Modified.
+func (pbcir PageBlobsCopyIncrementalResponse) LastModified() time.Time {
+	s := pbcir.rawResponse.Header.Get("Last-Modified")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// RequestID returns the value for header x-ms-request-id.
+func (pbcir PageBlobsCopyIncrementalResponse) RequestID() string {
+	return pbcir.rawResponse.Header.Get("x-ms-request-id")
+}
+
+// Version returns the value for header x-ms-version.
+func (pbcir PageBlobsCopyIncrementalResponse) Version() string {
+	return pbcir.rawResponse.Header.Get("x-ms-version")
+}
+
+// PageBlobsCreateResponse ...
+type PageBlobsCreateResponse struct {
+	rawResponse *http.Response
+}
+
+// Response returns the raw HTTP response object.
+func (pbcr PageBlobsCreateResponse) Response() *http.Response {
+	return pbcr.rawResponse
+}
+
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (pbcr PageBlobsCreateResponse) StatusCode() int {
+	return pbcr.rawResponse.StatusCode
+}
+
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (pbcr PageBlobsCreateResponse) Status() string {
+	return pbcr.rawResponse.Status
+}
+
+// ContentMD5 returns the value for header Content-MD5.
+func (pbcr PageBlobsCreateResponse) ContentMD5() []byte {
+	s := pbcr.rawResponse.Header.Get("Content-MD5")
+	if s == "" {
+		return nil
+	}
+	b, err := base64.StdEncoding.DecodeString(s)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+// Date returns the value for header Date.
+func (pbcr PageBlobsCreateResponse) Date() time.Time {
+	s := pbcr.rawResponse.Header.Get("Date")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// ETag returns the value for header ETag.
+func (pbcr PageBlobsCreateResponse) ETag() ETag {
+	return ETag(pbcr.rawResponse.Header.Get("ETag"))
+}
+
+// IsServerEncrypted returns the value for header x-ms-request-server-encrypted.
+func (pbcr PageBlobsCreateResponse) IsServerEncrypted() string {
+	return pbcr.rawResponse.Header.Get("x-ms-request-server-encrypted")
+}
+
+// LastModified returns the value for header Last-Modified.
+func (pbcr PageBlobsCreateResponse) LastModified() time.Time {
+	s := pbcr.rawResponse.Header.Get("Last-Modified")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// RequestID returns the value for header x-ms-request-id.
+func (pbcr PageBlobsCreateResponse) RequestID() string {
+	return pbcr.rawResponse.Header.Get("x-ms-request-id")
+}
+
+// Version returns the value for header x-ms-version.
+func (pbcr PageBlobsCreateResponse) Version() string {
+	return pbcr.rawResponse.Header.Get("x-ms-version")
+}
+
+// PageBlobsUploadPagesResponse ...
+type PageBlobsUploadPagesResponse struct {
+	rawResponse *http.Response
+}
+
+// Response returns the raw HTTP response object.
+func (pbupr PageBlobsUploadPagesResponse) Response() *http.Response {
+	return pbupr.rawResponse
+}
+
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (pbupr PageBlobsUploadPagesResponse) StatusCode() int {
+	return pbupr.rawResponse.StatusCode
+}
+
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (pbupr PageBlobsUploadPagesResponse) Status() string {
+	return pbupr.rawResponse.Status
+}
+
+// BlobSequenceNumber returns the value for header x-ms-blob-sequence-number.
+func (pbupr PageBlobsUploadPagesResponse) BlobSequenceNumber() int32 {
+	s := pbupr.rawResponse.Header.Get("x-ms-blob-sequence-number")
+	if s == "" {
+		return -1
+	}
+	i, err := strconv.ParseInt(s, 10, 32)
+	if err != nil {
+		panic(err)
+	}
+	return int32(i)
+}
+
+// ContentMD5 returns the value for header Content-MD5.
+func (pbupr PageBlobsUploadPagesResponse) ContentMD5() []byte {
+	s := pbupr.rawResponse.Header.Get("Content-MD5")
+	if s == "" {
+		return nil
+	}
+	b, err := base64.StdEncoding.DecodeString(s)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+// Date returns the value for header Date.
+func (pbupr PageBlobsUploadPagesResponse) Date() time.Time {
+	s := pbupr.rawResponse.Header.Get("Date")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// ETag returns the value for header ETag.
+func (pbupr PageBlobsUploadPagesResponse) ETag() ETag {
+	return ETag(pbupr.rawResponse.Header.Get("ETag"))
+}
+
+// IsServerEncrypted returns the value for header x-ms-request-server-encrypted.
+func (pbupr PageBlobsUploadPagesResponse) IsServerEncrypted() string {
+	return pbupr.rawResponse.Header.Get("x-ms-request-server-encrypted")
+}
+
+// LastModified returns the value for header Last-Modified.
+func (pbupr PageBlobsUploadPagesResponse) LastModified() time.Time {
+	s := pbupr.rawResponse.Header.Get("Last-Modified")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// RequestID returns the value for header x-ms-request-id.
+func (pbupr PageBlobsUploadPagesResponse) RequestID() string {
+	return pbupr.rawResponse.Header.Get("x-ms-request-id")
+}
+
+// Version returns the value for header x-ms-version.
+func (pbupr PageBlobsUploadPagesResponse) Version() string {
+	return pbupr.rawResponse.Header.Get("x-ms-version")
+}
+
+// PageBlobUpdateSequenceNumberResponse ...
+type PageBlobUpdateSequenceNumberResponse struct {
+	rawResponse *http.Response
+}
+
+// Response returns the raw HTTP response object.
+func (pbusnr PageBlobUpdateSequenceNumberResponse) Response() *http.Response {
+	return pbusnr.rawResponse
+}
+
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (pbusnr PageBlobUpdateSequenceNumberResponse) StatusCode() int {
+	return pbusnr.rawResponse.StatusCode
+}
+
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (pbusnr PageBlobUpdateSequenceNumberResponse) Status() string {
+	return pbusnr.rawResponse.Status
+}
+
+// BlobSequenceNumber returns the value for header x-ms-blob-sequence-number.
+func (pbusnr PageBlobUpdateSequenceNumberResponse) BlobSequenceNumber() string {
+	return pbusnr.rawResponse.Header.Get("x-ms-blob-sequence-number")
+}
+
+// Date returns the value for header Date.
+func (pbusnr PageBlobUpdateSequenceNumberResponse) Date() time.Time {
+	s := pbusnr.rawResponse.Header.Get("Date")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// ETag returns the value for header ETag.
+func (pbusnr PageBlobUpdateSequenceNumberResponse) ETag() ETag {
+	return ETag(pbusnr.rawResponse.Header.Get("ETag"))
+}
+
+// LastModified returns the value for header Last-Modified.
+func (pbusnr PageBlobUpdateSequenceNumberResponse) LastModified() time.Time {
+	s := pbusnr.rawResponse.Header.Get("Last-Modified")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// RequestID returns the value for header x-ms-request-id.
+func (pbusnr PageBlobUpdateSequenceNumberResponse) RequestID() string {
+	return pbusnr.rawResponse.Header.Get("x-ms-request-id")
+}
+
+// Version returns the value for header x-ms-version.
+func (pbusnr PageBlobUpdateSequenceNumberResponse) Version() string {
+	return pbusnr.rawResponse.Header.Get("x-ms-version")
 }
 
 // PageList - the list of pages
@@ -2562,6 +3417,19 @@ func (pl PageList) BlobContentLength() int64 {
 	return i
 }
 
+// BlobContentLength returns the value for header x-ms-blob-content-length.
+func (pl PageList) BlobContentLength() int64 {
+	s := pl.rawResponse.Header.Get("x-ms-blob-content-length")
+	if s == "" {
+		return -1
+	}
+	i, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		panic(err)
+	}
+	return i
+}
+
 // Date returns the value for header Date.
 func (pl PageList) Date() time.Time {
 	s := pl.rawResponse.Header.Get("Date")
@@ -2573,6 +3441,24 @@ func (pl PageList) Date() time.Time {
 		panic(err)
 	}
 	return t
+}
+
+// Date returns the value for header Date.
+func (pl PageList) Date() time.Time {
+	s := pl.rawResponse.Header.Get("Date")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// ETag returns the value for header ETag.
+func (pl PageList) ETag() ETag {
+	return ETag(pl.rawResponse.Header.Get("ETag"))
 }
 
 // ETag returns the value for header ETag.
@@ -2593,6 +3479,24 @@ func (pl PageList) LastModified() time.Time {
 	return t
 }
 
+// LastModified returns the value for header Last-Modified.
+func (pl PageList) LastModified() time.Time {
+	s := pl.rawResponse.Header.Get("Last-Modified")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// RequestID returns the value for header x-ms-request-id.
+func (pl PageList) RequestID() string {
+	return pl.rawResponse.Header.Get("x-ms-request-id")
+}
+
 // RequestID returns the value for header x-ms-request-id.
 func (pl PageList) RequestID() string {
 	return pl.rawResponse.Header.Get("x-ms-request-id")
@@ -2603,17 +3507,22 @@ func (pl PageList) Version() string {
 	return pl.rawResponse.Header.Get("x-ms-version")
 }
 
+// Version returns the value for header x-ms-version.
+func (pl PageList) Version() string {
+	return pl.rawResponse.Header.Get("x-ms-version")
+}
+
 // PageRange ...
 type PageRange struct {
-	Start int32 `xml:"Start"`
-	End   int32 `xml:"End"`
+	Start int64 `xml:"Start"`
+	End   int64 `xml:"End"`
 }
 
 // RetentionPolicy - the retention policy
 type RetentionPolicy struct {
 	// Enabled - Indicates whether a retention policy is enabled for the storage service
 	Enabled bool `xml:"Enabled"`
-	// Days - Indicates the number of days that metrics or logging or soft-delted data should be retained. All data older than this value will be deleted
+	// Days - Indicates the number of days that metrics or logging or soft-deleted data should be retained. All data older than this value will be deleted
 	Days *int32 `xml:"Days"`
 }
 

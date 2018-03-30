@@ -71,43 +71,39 @@ func (ap *AccessPolicy) UnmarshalXML(d *xml.Decoder, start xml.StartElement) err
 		panic("size mismatch between AccessPolicy and accessPolicy")
 	}
 	ap2 := (*accessPolicy)(unsafe.Pointer(ap))
-	err := d.DecodeElement(ap2, &start)
-	if err != nil {
-		ap = (*AccessPolicy)(unsafe.Pointer(ap2))
-	}
-	return err
+	return d.DecodeElement(ap2, &start)
 }
 
 // internal type used for marshalling
 type blobProperties struct {
-	LastModified          timeRFC1123       `xml:"Last-Modified"`
-	Etag                  ETag              `xml:"Etag"`
-	ContentLength         *int64            `xml:"Content-Length"`
-	ContentType           *string           `xml:"Content-Type"`
-	ContentEncoding       *string           `xml:"Content-Encoding"`
-	ContentLanguage       *string           `xml:"Content-Language"`
-	ContentMD5            *string           `xml:"Content-MD5"`
-	ContentDisposition    *string           `xml:"Content-Disposition"`
-	CacheControl          *string           `xml:"Cache-Control"`
-	BlobSequenceNumber    *int32            `xml:"x-ms-blob-sequence-number"`
-	BlobType              BlobType          `xml:"BlobType"`
-	LeaseStatus           LeaseStatusType   `xml:"LeaseStatus"`
-	LeaseState            LeaseStateType    `xml:"LeaseState"`
-	LeaseDuration         LeaseDurationType `xml:"LeaseDuration"`
-	CopyID                *string           `xml:"CopyId"`
-	CopyStatus            CopyStatusType    `xml:"CopyStatus"`
-	CopySource            *string           `xml:"CopySource"`
-	CopyProgress          *string           `xml:"CopyProgress"`
-	CopyCompletionTime    *timeRFC1123      `xml:"CopyCompletionTime"`
-	CopyStatusDescription *string           `xml:"CopyStatusDescription"`
-	ServerEncrypted       *bool             `xml:"ServerEncrypted"`
-	IncrementalCopy       *bool             `xml:"IncrementalCopy"`
-	DestinationSnapshot   *timeRFC3339      `xml:"DestinationSnapshot"`
-	AccessTier            AccessTierType    `xml:"AccessTier"`
-	AccessTierInferred    *bool             `xml:"AccessTierInferred"`
-	ArchiveStatus         ArchiveStatusType `xml:"ArchiveStatus"`
+	LastModified           timeRFC1123       `xml:"Last-Modified"`
+	Etag                   ETag              `xml:"Etag"`
+	ContentLength          *int64            `xml:"Content-Length"`
+	ContentType            *string           `xml:"Content-Type"`
+	ContentEncoding        *string           `xml:"Content-Encoding"`
+	ContentLanguage        *string           `xml:"Content-Language"`
+	ContentMD5             []byte            `xml:"Content-MD5"`
+	ContentDisposition     *string           `xml:"Content-Disposition"`
+	CacheControl           *string           `xml:"Cache-Control"`
+	BlobSequenceNumber     *int32            `xml:"x-ms-blob-sequence-number"`
+	BlobType               BlobType          `xml:"BlobType"`
+	LeaseStatus            LeaseStatusType   `xml:"LeaseStatus"`
+	LeaseState             LeaseStateType    `xml:"LeaseState"`
+	LeaseDuration          LeaseDurationType `xml:"LeaseDuration"`
+	CopyID                 *string           `xml:"CopyId"`
+	CopyStatus             CopyStatusType    `xml:"CopyStatus"`
+	CopySource             *string           `xml:"CopySource"`
+	CopyProgress           *string           `xml:"CopyProgress"`
+	CopyCompletionTime     *timeRFC1123      `xml:"CopyCompletionTime"`
+	CopyStatusDescription  *string           `xml:"CopyStatusDescription"`
+	ServerEncrypted        *bool             `xml:"ServerEncrypted"`
+	IncrementalCopy        *bool             `xml:"IncrementalCopy"`
+	DestinationSnapshot    *string           `xml:"DestinationSnapshot"`
 	DeletedTime            *timeRFC1123      `xml:"DeletedTime"`
 	RemainingRetentionDays *int32            `xml:"RemainingRetentionDays"`
+	AccessTier             AccessTierType    `xml:"AccessTier"`
+	AccessTierInferred     *bool             `xml:"AccessTierInferred"`
+	ArchiveStatus          ArchiveStatusType `xml:"ArchiveStatus"`
 }
 
 // MarshalXML implements the xml.Marshaler interface for BlobProperties.
@@ -125,42 +121,7 @@ func (bp *BlobProperties) UnmarshalXML(d *xml.Decoder, start xml.StartElement) e
 		panic("size mismatch between BlobProperties and blobProperties")
 	}
 	bp2 := (*blobProperties)(unsafe.Pointer(bp))
-	err := d.DecodeElement(bp2, &start)
-	if err != nil {
-		bp = (*BlobProperties)(unsafe.Pointer(bp2))
-	}
-	return err
-}
-
-// internal type used for marshalling
-type blob struct {
-	Name       string         `xml:"Name"`
-	Deleted    bool           `xml:"Deleted"`
-	Snapshot   timeRFC3339    `xml:"Snapshot"`
-	Properties BlobProperties `xml:"Properties"`
-	Metadata   Metadata       `xml:"Metadata"`
-}
-
-// MarshalXML implements the xml.Marshaler interface for Blob.
-func (b Blob) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	if reflect.TypeOf((*Blob)(nil)).Elem().Size() != reflect.TypeOf((*blob)(nil)).Elem().Size() {
-		panic("size mismatch between Blob and blob")
-	}
-	b2 := (*blob)(unsafe.Pointer(&b))
-	return e.EncodeElement(*b2, start)
-}
-
-// UnmarshalXML implements the xml.Unmarshaler interface for Blob.
-func (b *Blob) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	if reflect.TypeOf((*Blob)(nil)).Elem().Size() != reflect.TypeOf((*blob)(nil)).Elem().Size() {
-		panic("size mismatch between Blob and blob")
-	}
-	b2 := (*blob)(unsafe.Pointer(b))
-	err := d.DecodeElement(b2, &start)
-	if err != nil {
-		b = (*Blob)(unsafe.Pointer(b2))
-	}
-	return err
+	return d.DecodeElement(bp2, &start)
 }
 
 // internal type used for marshalling
@@ -188,11 +149,7 @@ func (cp *ContainerProperties) UnmarshalXML(d *xml.Decoder, start xml.StartEleme
 		panic("size mismatch between ContainerProperties and containerProperties")
 	}
 	cp2 := (*containerProperties)(unsafe.Pointer(cp))
-	err := d.DecodeElement(cp2, &start)
-	if err != nil {
-		cp = (*ContainerProperties)(unsafe.Pointer(cp2))
-	}
-	return err
+	return d.DecodeElement(cp2, &start)
 }
 
 // internal type used for marshalling
@@ -216,9 +173,5 @@ func (gr *GeoReplication) UnmarshalXML(d *xml.Decoder, start xml.StartElement) e
 		panic("size mismatch between GeoReplication and geoReplication")
 	}
 	gr2 := (*geoReplication)(unsafe.Pointer(gr))
-	err := d.DecodeElement(gr2, &start)
-	if err != nil {
-		gr = (*GeoReplication)(unsafe.Pointer(gr2))
-	}
-	return err
+	return d.DecodeElement(gr2, &start)
 }
