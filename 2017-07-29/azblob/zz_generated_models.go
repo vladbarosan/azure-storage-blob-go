@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unsafe"
 )
 
 // ETag is an entity tag.
@@ -84,7 +85,7 @@ func joinConst(s interface{}, sep string) string {
 	return strings.Join(ss, sep)
 }
 
-// AccessTierType enumerates the values for access tier.
+// AccessTierType enumerates the values for access tier type.
 type AccessTierType string
 
 const (
@@ -112,7 +113,12 @@ const (
 	AccessTierP6 AccessTierType = "P6"
 )
 
-// ArchiveStatusType enumerates the values for archive status.
+// PossibleAccessTierTypeValues returns an array of possible values for the AccessTierType const type.
+func PossibleAccessTierTypeValues() []AccessTierType {
+	return []AccessTierType{AccessTierArchive, AccessTierCool, AccessTierHot, AccessTierNone, AccessTierP10, AccessTierP20, AccessTierP30, AccessTierP4, AccessTierP40, AccessTierP50, AccessTierP6}
+}
+
+// ArchiveStatusType enumerates the values for archive status type.
 type ArchiveStatusType string
 
 const (
@@ -123,6 +129,11 @@ const (
 	// ArchiveStatusRehydratePendingToHot ...
 	ArchiveStatusRehydratePendingToHot ArchiveStatusType = "rehydrate-pending-to-hot"
 )
+
+// PossibleArchiveStatusTypeValues returns an array of possible values for the ArchiveStatusType const type.
+func PossibleArchiveStatusTypeValues() []ArchiveStatusType {
+	return []ArchiveStatusType{ArchiveStatusNone, ArchiveStatusRehydratePendingToCool, ArchiveStatusRehydratePendingToHot}
+}
 
 // BlobType enumerates the values for blob type.
 type BlobType string
@@ -138,6 +149,11 @@ const (
 	BlobPageBlob BlobType = "PageBlob"
 )
 
+// PossibleBlobTypeValues returns an array of possible values for the BlobType const type.
+func PossibleBlobTypeValues() []BlobType {
+	return []BlobType{BlobAppendBlob, BlobBlockBlob, BlobNone, BlobPageBlob}
+}
+
 // BlockListType enumerates the values for block list type.
 type BlockListType string
 
@@ -151,6 +167,11 @@ const (
 	// BlockListUncommitted ...
 	BlockListUncommitted BlockListType = "uncommitted"
 )
+
+// PossibleBlockListTypeValues returns an array of possible values for the BlockListType const type.
+func PossibleBlockListTypeValues() []BlockListType {
+	return []BlockListType{BlockListAll, BlockListCommitted, BlockListNone, BlockListUncommitted}
+}
 
 // CopyStatusType enumerates the values for copy status type.
 type CopyStatusType string
@@ -168,6 +189,11 @@ const (
 	CopyStatusSuccess CopyStatusType = "success"
 )
 
+// PossibleCopyStatusTypeValues returns an array of possible values for the CopyStatusType const type.
+func PossibleCopyStatusTypeValues() []CopyStatusType {
+	return []CopyStatusType{CopyStatusAborted, CopyStatusFailed, CopyStatusNone, CopyStatusPending, CopyStatusSuccess}
+}
+
 // DeleteSnapshotsOptionType enumerates the values for delete snapshots option type.
 type DeleteSnapshotsOptionType string
 
@@ -179,6 +205,11 @@ const (
 	// DeleteSnapshotsOptionOnly ...
 	DeleteSnapshotsOptionOnly DeleteSnapshotsOptionType = "only"
 )
+
+// PossibleDeleteSnapshotsOptionTypeValues returns an array of possible values for the DeleteSnapshotsOptionType const type.
+func PossibleDeleteSnapshotsOptionTypeValues() []DeleteSnapshotsOptionType {
+	return []DeleteSnapshotsOptionType{DeleteSnapshotsOptionInclude, DeleteSnapshotsOptionNone, DeleteSnapshotsOptionOnly}
+}
 
 // GeoReplicationStatusType enumerates the values for geo replication status type.
 type GeoReplicationStatusType string
@@ -194,6 +225,11 @@ const (
 	GeoReplicationStatusUnavailable GeoReplicationStatusType = "unavailable"
 )
 
+// PossibleGeoReplicationStatusTypeValues returns an array of possible values for the GeoReplicationStatusType const type.
+func PossibleGeoReplicationStatusTypeValues() []GeoReplicationStatusType {
+	return []GeoReplicationStatusType{GeoReplicationStatusBootstrap, GeoReplicationStatusLive, GeoReplicationStatusNone, GeoReplicationStatusUnavailable}
+}
+
 // LeaseDurationType enumerates the values for lease duration type.
 type LeaseDurationType string
 
@@ -205,6 +241,11 @@ const (
 	// LeaseDurationNone represents an empty LeaseDurationType.
 	LeaseDurationNone LeaseDurationType = ""
 )
+
+// PossibleLeaseDurationTypeValues returns an array of possible values for the LeaseDurationType const type.
+func PossibleLeaseDurationTypeValues() []LeaseDurationType {
+	return []LeaseDurationType{LeaseDurationFixed, LeaseDurationInfinite, LeaseDurationNone}
+}
 
 // LeaseStateType enumerates the values for lease state type.
 type LeaseStateType string
@@ -224,6 +265,11 @@ const (
 	LeaseStateNone LeaseStateType = ""
 )
 
+// PossibleLeaseStateTypeValues returns an array of possible values for the LeaseStateType const type.
+func PossibleLeaseStateTypeValues() []LeaseStateType {
+	return []LeaseStateType{LeaseStateAvailable, LeaseStateBreaking, LeaseStateBroken, LeaseStateExpired, LeaseStateLeased, LeaseStateNone}
+}
+
 // LeaseStatusType enumerates the values for lease status type.
 type LeaseStatusType string
 
@@ -236,7 +282,12 @@ const (
 	LeaseStatusUnlocked LeaseStatusType = "unlocked"
 )
 
-// ListBlobsIncludeItemType enumerates the values for list blobs include item.
+// PossibleLeaseStatusTypeValues returns an array of possible values for the LeaseStatusType const type.
+func PossibleLeaseStatusTypeValues() []LeaseStatusType {
+	return []LeaseStatusType{LeaseStatusLocked, LeaseStatusNone, LeaseStatusUnlocked}
+}
+
+// ListBlobsIncludeItemType enumerates the values for list blobs include item type.
 type ListBlobsIncludeItemType string
 
 const (
@@ -254,6 +305,11 @@ const (
 	ListBlobsIncludeItemUncommittedblobs ListBlobsIncludeItemType = "uncommittedblobs"
 )
 
+// PossibleListBlobsIncludeItemTypeValues returns an array of possible values for the ListBlobsIncludeItemType const type.
+func PossibleListBlobsIncludeItemTypeValues() []ListBlobsIncludeItemType {
+	return []ListBlobsIncludeItemType{ListBlobsIncludeItemCopy, ListBlobsIncludeItemDeleted, ListBlobsIncludeItemMetadata, ListBlobsIncludeItemNone, ListBlobsIncludeItemSnapshots, ListBlobsIncludeItemUncommittedblobs}
+}
+
 // ListContainersIncludeType enumerates the values for list containers include type.
 type ListContainersIncludeType string
 
@@ -263,6 +319,11 @@ const (
 	// ListContainersIncludeNone represents an empty ListContainersIncludeType.
 	ListContainersIncludeNone ListContainersIncludeType = ""
 )
+
+// PossibleListContainersIncludeTypeValues returns an array of possible values for the ListContainersIncludeType const type.
+func PossibleListContainersIncludeTypeValues() []ListContainersIncludeType {
+	return []ListContainersIncludeType{ListContainersIncludeMetadata, ListContainersIncludeNone}
+}
 
 // PublicAccessType enumerates the values for public access type.
 type PublicAccessType string
@@ -275,6 +336,11 @@ const (
 	// PublicAccessNone represents an empty PublicAccessType.
 	PublicAccessNone PublicAccessType = ""
 )
+
+// PossiblePublicAccessTypeValues returns an array of possible values for the PublicAccessType const type.
+func PossiblePublicAccessTypeValues() []PublicAccessType {
+	return []PublicAccessType{PublicAccessBlob, PublicAccessContainer, PublicAccessNone}
+}
 
 // SequenceNumberActionType enumerates the values for sequence number action type.
 type SequenceNumberActionType string
@@ -290,6 +356,11 @@ const (
 	SequenceNumberActionUpdate SequenceNumberActionType = "update"
 )
 
+// PossibleSequenceNumberActionTypeValues returns an array of possible values for the SequenceNumberActionType const type.
+func PossibleSequenceNumberActionTypeValues() []SequenceNumberActionType {
+	return []SequenceNumberActionType{SequenceNumberActionIncrement, SequenceNumberActionMax, SequenceNumberActionNone, SequenceNumberActionUpdate}
+}
+
 // AccessPolicy - An Access policy
 type AccessPolicy struct {
 	// Start - the date-time the policy is active
@@ -298,6 +369,24 @@ type AccessPolicy struct {
 	Expiry time.Time `xml:"Expiry"`
 	// Permission - the permissions for the acl policy
 	Permission string `xml:"Permission"`
+}
+
+// MarshalXML implements the xml.Marshaler interface for AccessPolicy.
+func (ap AccessPolicy) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	if reflect.TypeOf((*AccessPolicy)(nil)).Elem().Size() != reflect.TypeOf((*accessPolicy)(nil)).Elem().Size() {
+		panic("size mismatch between AccessPolicy and accessPolicy")
+	}
+	ap2 := (*accessPolicy)(unsafe.Pointer(&ap))
+	return e.EncodeElement(*ap2, start)
+}
+
+// UnmarshalXML implements the xml.Unmarshaler interface for AccessPolicy.
+func (ap *AccessPolicy) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	if reflect.TypeOf((*AccessPolicy)(nil)).Elem().Size() != reflect.TypeOf((*accessPolicy)(nil)).Elem().Size() {
+		panic("size mismatch between AccessPolicy and accessPolicy")
+	}
+	ap2 := (*accessPolicy)(unsafe.Pointer(ap))
+	return d.DecodeElement(ap2, &start)
 }
 
 // AppendBlobsAppendBlockResponse ...
@@ -496,16 +585,16 @@ type BlobProperties struct {
 	ContentDisposition *string `xml:"Content-Disposition"`
 	CacheControl       *string `xml:"Cache-Control"`
 	BlobSequenceNumber *int32  `xml:"x-ms-blob-sequence-number"`
-	// BlobType - Possible values include: 'BlockBlob', 'PageBlob', 'AppendBlob', 'None'
+	// BlobType - Possible values include: 'BlobBlockBlob', 'BlobPageBlob', 'BlobAppendBlob', 'BlobNone'
 	BlobType BlobType `xml:"BlobType"`
-	// LeaseStatus - Possible values include: 'Locked', 'Unlocked', 'None'
+	// LeaseStatus - Possible values include: 'LeaseStatusLocked', 'LeaseStatusUnlocked', 'LeaseStatusNone'
 	LeaseStatus LeaseStatusType `xml:"LeaseStatus"`
-	// LeaseState - Possible values include: 'Available', 'Leased', 'Expired', 'Breaking', 'Broken', 'None'
+	// LeaseState - Possible values include: 'LeaseStateAvailable', 'LeaseStateLeased', 'LeaseStateExpired', 'LeaseStateBreaking', 'LeaseStateBroken', 'LeaseStateNone'
 	LeaseState LeaseStateType `xml:"LeaseState"`
-	// LeaseDuration - Possible values include: 'Infinite', 'Fixed', 'None'
+	// LeaseDuration - Possible values include: 'LeaseDurationInfinite', 'LeaseDurationFixed', 'LeaseDurationNone'
 	LeaseDuration LeaseDurationType `xml:"LeaseDuration"`
 	CopyID        *string           `xml:"CopyId"`
-	// CopyStatus - Possible values include: 'Pending', 'Success', 'Aborted', 'Failed', 'None'
+	// CopyStatus - Possible values include: 'CopyStatusPending', 'CopyStatusSuccess', 'CopyStatusAborted', 'CopyStatusFailed', 'CopyStatusNone'
 	CopyStatus             CopyStatusType `xml:"CopyStatus"`
 	CopySource             *string        `xml:"CopySource"`
 	CopyProgress           *string        `xml:"CopyProgress"`
@@ -516,11 +605,29 @@ type BlobProperties struct {
 	DestinationSnapshot    *string        `xml:"DestinationSnapshot"`
 	DeletedTime            *time.Time     `xml:"DeletedTime"`
 	RemainingRetentionDays *int32         `xml:"RemainingRetentionDays"`
-	// AccessTier - Possible values include: 'P4', 'P6', 'P10', 'P20', 'P30', 'P40', 'P50', 'Hot', 'Cool', 'Archive', 'None'
+	// AccessTier - Possible values include: 'AccessTierP4', 'AccessTierP6', 'AccessTierP10', 'AccessTierP20', 'AccessTierP30', 'AccessTierP40', 'AccessTierP50', 'AccessTierHot', 'AccessTierCool', 'AccessTierArchive', 'AccessTierNone'
 	AccessTier         AccessTierType `xml:"AccessTier"`
 	AccessTierInferred *bool          `xml:"AccessTierInferred"`
-	// ArchiveStatus - Possible values include: 'RehydratePendingToHot', 'RehydratePendingToCool', 'None'
+	// ArchiveStatus - Possible values include: 'ArchiveStatusRehydratePendingToHot', 'ArchiveStatusRehydratePendingToCool', 'ArchiveStatusNone'
 	ArchiveStatus ArchiveStatusType `xml:"ArchiveStatus"`
+}
+
+// MarshalXML implements the xml.Marshaler interface for BlobProperties.
+func (bp BlobProperties) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	if reflect.TypeOf((*BlobProperties)(nil)).Elem().Size() != reflect.TypeOf((*blobProperties)(nil)).Elem().Size() {
+		panic("size mismatch between BlobProperties and blobProperties")
+	}
+	bp2 := (*blobProperties)(unsafe.Pointer(&bp))
+	return e.EncodeElement(*bp2, start)
+}
+
+// UnmarshalXML implements the xml.Unmarshaler interface for BlobProperties.
+func (bp *BlobProperties) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	if reflect.TypeOf((*BlobProperties)(nil)).Elem().Size() != reflect.TypeOf((*blobProperties)(nil)).Elem().Size() {
+		panic("size mismatch between BlobProperties and blobProperties")
+	}
+	bp2 := (*blobProperties)(unsafe.Pointer(bp))
+	return d.DecodeElement(bp2, &start)
 }
 
 // BlobsAbortCopyFromURLResponse ...
@@ -886,6 +993,19 @@ type BlobsGetPropertiesResponse struct {
 	rawResponse *http.Response
 }
 
+// NewMetadata returns user-defined key/value pairs.
+func (bgpr BlobsGetPropertiesResponse) NewMetadata() Metadata {
+	md := Metadata{}
+	for k, v := range bgpr.rawResponse.Header {
+		if len(k) > mdPrefixLen {
+			if prefix := k[0:mdPrefixLen]; strings.EqualFold(prefix, mdPrefix) {
+				md[strings.ToLower(k[mdPrefixLen:])] = v[0]
+			}
+		}
+	}
+	return md
+}
+
 // Response returns the raw HTTP response object.
 func (bgpr BlobsGetPropertiesResponse) Response() *http.Response {
 	return bgpr.rawResponse
@@ -1102,19 +1222,6 @@ func (bgpr BlobsGetPropertiesResponse) RequestID() string {
 // Version returns the value for header x-ms-version.
 func (bgpr BlobsGetPropertiesResponse) Version() string {
 	return bgpr.rawResponse.Header.Get("x-ms-version")
-}
-
-// NewMetadata returns user-defined key/value pairs.
-func (bgpr BlobsGetPropertiesResponse) NewMetadata() Metadata {
-	md := Metadata{}
-	for k, v := range bgpr.rawResponse.Header {
-		if len(k) > mdPrefixLen {
-			if prefix := k[0:mdPrefixLen]; strings.EqualFold(prefix, mdPrefix) {
-				md[strings.ToLower(k[mdPrefixLen:])] = v[0]
-			}
-		}
-	}
-	return md
 }
 
 // BlobsReleaseLeaseResponse ...
@@ -1523,9 +1630,9 @@ func (bur BlobsUndeleteResponse) Version() string {
 // Block - Represents a single block in a block blob.  It describes the block's ID and size.
 type Block struct {
 	// Name - The base64 encoded block ID.
-	Name string `xml:"Name"`
+	Name string `xml:"name"`
 	// Size - The block size in bytes.
-	Size int32 `xml:"Size"`
+	Size int32 `xml:"size"`
 }
 
 // BlockBlobsCommitBlockListResponse ...
@@ -1854,14 +1961,32 @@ type Container struct {
 type ContainerProperties struct {
 	LastModified time.Time `xml:"Last-Modified"`
 	Etag         ETag      `xml:"Etag"`
-	// LeaseStatus - Possible values include: 'Locked', 'Unlocked', 'None'
+	// LeaseStatus - Possible values include: 'LeaseStatusLocked', 'LeaseStatusUnlocked', 'LeaseStatusNone'
 	LeaseStatus LeaseStatusType `xml:"LeaseStatus"`
-	// LeaseState - Possible values include: 'Available', 'Leased', 'Expired', 'Breaking', 'Broken', 'None'
+	// LeaseState - Possible values include: 'LeaseStateAvailable', 'LeaseStateLeased', 'LeaseStateExpired', 'LeaseStateBreaking', 'LeaseStateBroken', 'LeaseStateNone'
 	LeaseState LeaseStateType `xml:"LeaseState"`
-	// LeaseDuration - Possible values include: 'Infinite', 'Fixed', 'None'
+	// LeaseDuration - Possible values include: 'LeaseDurationInfinite', 'LeaseDurationFixed', 'LeaseDurationNone'
 	LeaseDuration LeaseDurationType `xml:"LeaseDuration"`
-	// PublicAccess - Possible values include: 'Container', 'Blob', 'None'
+	// PublicAccess - Possible values include: 'PublicAccessContainer', 'PublicAccessBlob', 'PublicAccessNone'
 	PublicAccess PublicAccessType `xml:"PublicAccess"`
+}
+
+// MarshalXML implements the xml.Marshaler interface for ContainerProperties.
+func (cp ContainerProperties) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	if reflect.TypeOf((*ContainerProperties)(nil)).Elem().Size() != reflect.TypeOf((*containerProperties)(nil)).Elem().Size() {
+		panic("size mismatch between ContainerProperties and containerProperties")
+	}
+	cp2 := (*containerProperties)(unsafe.Pointer(&cp))
+	return e.EncodeElement(*cp2, start)
+}
+
+// UnmarshalXML implements the xml.Unmarshaler interface for ContainerProperties.
+func (cp *ContainerProperties) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	if reflect.TypeOf((*ContainerProperties)(nil)).Elem().Size() != reflect.TypeOf((*containerProperties)(nil)).Elem().Size() {
+		panic("size mismatch between ContainerProperties and containerProperties")
+	}
+	cp2 := (*containerProperties)(unsafe.Pointer(cp))
+	return d.DecodeElement(cp2, &start)
 }
 
 // ContainersAcquireLeaseResponse ...
@@ -2179,6 +2304,19 @@ type ContainersGetPropertiesResponse struct {
 	rawResponse *http.Response
 }
 
+// NewMetadata returns user-defined key/value pairs.
+func (cgpr ContainersGetPropertiesResponse) NewMetadata() Metadata {
+	md := Metadata{}
+	for k, v := range cgpr.rawResponse.Header {
+		if len(k) > mdPrefixLen {
+			if prefix := k[0:mdPrefixLen]; strings.EqualFold(prefix, mdPrefix) {
+				md[strings.ToLower(k[mdPrefixLen:])] = v[0]
+			}
+		}
+	}
+	return md
+}
+
 // Response returns the raw HTTP response object.
 func (cgpr ContainersGetPropertiesResponse) Response() *http.Response {
 	return cgpr.rawResponse
@@ -2253,19 +2391,6 @@ func (cgpr ContainersGetPropertiesResponse) RequestID() string {
 // Version returns the value for header x-ms-version.
 func (cgpr ContainersGetPropertiesResponse) Version() string {
 	return cgpr.rawResponse.Header.Get("x-ms-version")
-}
-
-// NewMetadata returns user-defined key/value pairs.
-func (cgpr ContainersGetPropertiesResponse) NewMetadata() Metadata {
-	md := Metadata{}
-	for k, v := range cgpr.rawResponse.Header {
-		if len(k) > mdPrefixLen {
-			if prefix := k[0:mdPrefixLen]; strings.EqualFold(prefix, mdPrefix) {
-				md[strings.ToLower(k[mdPrefixLen:])] = v[0]
-			}
-		}
-	}
-	return md
 }
 
 // ContainersReleaseLeaseResponse ...
@@ -2517,10 +2642,10 @@ func (csmr ContainersSetMetadataResponse) Version() string {
 	return csmr.rawResponse.Header.Get("x-ms-version")
 }
 
-// CorsRule - CORS is an HTTP feature that enables a web application running under one domain to access resources in
-// another domain. Web browsers implement a security restriction known as same-origin policy that prevents a web page
-// from calling APIs in a different domain; CORS provides a secure way to allow one domain (the origin domain) to call
-// APIs in another domain
+// CorsRule - CORS is an HTTP feature that enables a web application running under one domain to access
+// resources in another domain. Web browsers implement a security restriction known as same-origin policy that
+// prevents a web page from calling APIs in a different domain; CORS provides a secure way to allow one domain
+// (the origin domain) to call APIs in another domain
 type CorsRule struct {
 	// AllowedOrigins - The origin domains that are permitted to make a request against the storage service via CORS. The origin domain is the domain from which the request originates. Note that the origin must be an exact case-sensitive match with the origin that the user age sends to the service. You can also use the wildcard character '*' to allow all origin domains to make requests via CORS.
 	AllowedOrigins string `xml:"AllowedOrigins"`
@@ -2537,6 +2662,19 @@ type CorsRule struct {
 // DownloadResponse ...
 type DownloadResponse struct {
 	rawResponse *http.Response
+}
+
+// NewMetadata returns user-defined key/value pairs.
+func (dr DownloadResponse) NewMetadata() Metadata {
+	md := Metadata{}
+	for k, v := range dr.rawResponse.Header {
+		if len(k) > mdPrefixLen {
+			if prefix := k[0:mdPrefixLen]; strings.EqualFold(prefix, mdPrefix) {
+				md[strings.ToLower(k[mdPrefixLen:])] = v[0]
+			}
+		}
+	}
+	return md
 }
 
 // Response returns the raw HTTP response object.
@@ -2747,25 +2885,30 @@ func (dr DownloadResponse) Version() string {
 	return dr.rawResponse.Header.Get("x-ms-version")
 }
 
-// NewMetadata returns user-defined key/value pairs.
-func (dr DownloadResponse) NewMetadata() Metadata {
-	md := Metadata{}
-	for k, v := range dr.rawResponse.Header {
-		if len(k) > mdPrefixLen {
-			if prefix := k[0:mdPrefixLen]; strings.EqualFold(prefix, mdPrefix) {
-				md[strings.ToLower(k[mdPrefixLen:])] = v[0]
-			}
-		}
-	}
-	return md
-}
-
 // GeoReplication ...
 type GeoReplication struct {
-	// Status - The status of the secondary location. Possible values include: 'Live', 'Bootstrap', 'Unavailable', 'None'
+	// Status - The status of the secondary location. Possible values include: 'GeoReplicationStatusLive', 'GeoReplicationStatusBootstrap', 'GeoReplicationStatusUnavailable', 'GeoReplicationStatusNone'
 	Status GeoReplicationStatusType `xml:"Status"`
 	// LastSyncTime - A GMT date/time value, to the second. All primary writes preceding this value are guaranteed to be available for read operations at the secondary. Primary writes after this point in time may or may not be available for reads.
 	LastSyncTime time.Time `xml:"LastSyncTime"`
+}
+
+// MarshalXML implements the xml.Marshaler interface for GeoReplication.
+func (gr GeoReplication) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	if reflect.TypeOf((*GeoReplication)(nil)).Elem().Size() != reflect.TypeOf((*geoReplication)(nil)).Elem().Size() {
+		panic("size mismatch between GeoReplication and geoReplication")
+	}
+	gr2 := (*geoReplication)(unsafe.Pointer(&gr))
+	return e.EncodeElement(*gr2, start)
+}
+
+// UnmarshalXML implements the xml.Unmarshaler interface for GeoReplication.
+func (gr *GeoReplication) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	if reflect.TypeOf((*GeoReplication)(nil)).Elem().Size() != reflect.TypeOf((*geoReplication)(nil)).Elem().Size() {
+		panic("size mismatch between GeoReplication and geoReplication")
+	}
+	gr2 := (*geoReplication)(unsafe.Pointer(gr))
+	return d.DecodeElement(gr2, &start)
 }
 
 // ListBlobsResponse - An enumeration of blobs
@@ -3716,4 +3859,98 @@ func (sss StorageServiceStats) RequestID() string {
 // Version returns the value for header x-ms-version.
 func (sss StorageServiceStats) Version() string {
 	return sss.rawResponse.Header.Get("x-ms-version")
+}
+
+const (
+	rfc3339Format = "2006-01-02T15:04:05.0000000Z07:00"
+)
+
+// used to convert times from UTC to GMT before sending across the wire
+var gmt = time.FixedZone("GMT", 0)
+
+// internal type used for marshalling time in RFC1123 format
+type timeRFC1123 struct {
+	time.Time
+}
+
+// MarshalText implements the encoding.TextMarshaler interface for timeRFC1123.
+func (t timeRFC1123) MarshalText() ([]byte, error) {
+	return []byte(t.Format(time.RFC1123)), nil
+}
+
+// UnmarshalText implements the encoding.TextUnmarshaler interface for timeRFC1123.
+func (t *timeRFC1123) UnmarshalText(data []byte) (err error) {
+	t.Time, err = time.Parse(time.RFC1123, string(data))
+	return
+}
+
+// internal type used for marshalling time in RFC3339 format
+type timeRFC3339 struct {
+	time.Time
+}
+
+// MarshalText implements the encoding.TextMarshaler interface for timeRFC3339.
+func (t timeRFC3339) MarshalText() ([]byte, error) {
+	return []byte(t.Format(rfc3339Format)), nil
+}
+
+// UnmarshalText implements the encoding.TextUnmarshaler interface for timeRFC3339.
+func (t *timeRFC3339) UnmarshalText(data []byte) (err error) {
+	t.Time, err = time.Parse(rfc3339Format, string(data))
+	return
+}
+
+// internal type used for marshalling
+type accessPolicy struct {
+	Start      timeRFC3339 `xml:"Start"`
+	Expiry     timeRFC3339 `xml:"Expiry"`
+	Permission string      `xml:"Permission"`
+}
+
+// internal type used for marshalling
+type blobProperties struct {
+	LastModified           timeRFC1123       `xml:"Last-Modified"`
+	Etag                   ETag              `xml:"Etag"`
+	ContentLength          *int64            `xml:"Content-Length"`
+	ContentType            *string           `xml:"Content-Type"`
+	ContentEncoding        *string           `xml:"Content-Encoding"`
+	ContentLanguage        *string           `xml:"Content-Language"`
+	ContentMD5             []byte            `xml:"Content-MD5"`
+	ContentDisposition     *string           `xml:"Content-Disposition"`
+	CacheControl           *string           `xml:"Cache-Control"`
+	BlobSequenceNumber     *int32            `xml:"x-ms-blob-sequence-number"`
+	BlobType               BlobType          `xml:"BlobType"`
+	LeaseStatus            LeaseStatusType   `xml:"LeaseStatus"`
+	LeaseState             LeaseStateType    `xml:"LeaseState"`
+	LeaseDuration          LeaseDurationType `xml:"LeaseDuration"`
+	CopyID                 *string           `xml:"CopyId"`
+	CopyStatus             CopyStatusType    `xml:"CopyStatus"`
+	CopySource             *string           `xml:"CopySource"`
+	CopyProgress           *string           `xml:"CopyProgress"`
+	CopyCompletionTime     *timeRFC1123      `xml:"CopyCompletionTime"`
+	CopyStatusDescription  *string           `xml:"CopyStatusDescription"`
+	ServerEncrypted        *bool             `xml:"ServerEncrypted"`
+	IncrementalCopy        *bool             `xml:"IncrementalCopy"`
+	DestinationSnapshot    *string           `xml:"DestinationSnapshot"`
+	DeletedTime            *timeRFC1123      `xml:"DeletedTime"`
+	RemainingRetentionDays *int32            `xml:"RemainingRetentionDays"`
+	AccessTier             AccessTierType    `xml:"AccessTier"`
+	AccessTierInferred     *bool             `xml:"AccessTierInferred"`
+	ArchiveStatus          ArchiveStatusType `xml:"ArchiveStatus"`
+}
+
+// internal type used for marshalling
+type containerProperties struct {
+	LastModified  timeRFC1123       `xml:"Last-Modified"`
+	Etag          ETag              `xml:"Etag"`
+	LeaseStatus   LeaseStatusType   `xml:"LeaseStatus"`
+	LeaseState    LeaseStateType    `xml:"LeaseState"`
+	LeaseDuration LeaseDurationType `xml:"LeaseDuration"`
+	PublicAccess  PublicAccessType  `xml:"PublicAccess"`
+}
+
+// internal type used for marshalling
+type geoReplication struct {
+	Status       GeoReplicationStatusType `xml:"Status"`
+	LastSyncTime timeRFC1123              `xml:"LastSyncTime"`
 }
